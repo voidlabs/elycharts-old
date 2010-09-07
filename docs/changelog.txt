@@ -1,0 +1,110 @@
+v2.0.0
+- refactoring completo
+
+v2.0.1
+- ripristinato supporto label in pie e funnel
+- label HTML con offset
+- supporto passaggio anchor come elementi dom
+- ottimizzazione gestione mouseover
+- applicabile l'highlight "move" anche al funnel e migliorie ottimizzazioni generali all'highlight
+- nuovo grafico barline, e supporto highlight "scale" e "move"
+- fix vari
+
+v2.0.2
+- supporto piechart vuoto e serie "empty"
+- fix passaggio width ed height
+- nuova opzione "interactive"
+- nuove opzioni highlight: scaleSpeed, scaleEasing, moveSpeed, moveEasing
+- applicabile highlight "scale" a funnel e piechart (prima implementazione)
+- supporto opzione "delay" in startAnimation
+- supporto valori cumulativi in line chart, opzione series[x].cumulative
+- supporto opzione axis[X].labelsCompactUnits (= ['k','m']) per accorciare le label numeriche con unita' (prima implementazione)
+- rename interno strutture codice
+- migliorie gestione sync animazioni
+
+v2.0.3
+- ripristinato supporto opzione "color"
+- gestione transizioni grafici mediante chiamate successive a $(X).chart(...)
+- supporto series.stepAnimation (transizioni grafici), features.animation.startAnimation (generazione elementi non-serie), features.animation.stepAnimation (transizioni elementi non-serie)
+- supporto series.visible
+- grafico barline: supporto direction = 'rtl'
+- fix vari
+
+v2.0.4
+- migliorato supporto pixelWorkAround
+- fix metodi interni
+- spostate config fadeDelay e moveDelay in opt.features.tooltip, areaMoveDelay in opt.features.mousearea
+- supporto opt.features.mousearea.syncTag per collegare le parti interattive di grafici diversi (se si va su uno si disattivano le altre)
+- migliorie posizionamento tooltip
+- supporto opt.features.tooltip.positionHandler per definire la propria funzione di posizionamento tooltip
+- supporto per passaggio di oggetti DOM/JQUERY come label
+
+v2.0.5
+- impostato defaultSeries.axis = 'l', features.balloons.width = 0
+- fix stackedWith e startAnimation.grow|avg|reg
+- posizionamento relativo invece di assoluto per balloons
+- supporto linea balloons mediante features.balloons.line e features.balloons.lineProps
+- gestione balloon e label per ultimo indice di un funnel associato a bottom sector
+- supporto debug della configurazione attuale mediante libreria DP_Debug (http://www.depressedpress.com/Content/Development/JavaScript/Extensions/DP_DeBug/Index.cfm)
+- ripristinato supporto legenda tramite features.legend
+- fix titoli assi
+
+v2.0.6
+- supporto per "template", che permette di specificare quale configurazione di default utilizzare (permette quindi di avere dei "template" di configurazioni)
+  WARN: $.elysia_charts.default_options e' stato rinominato in $.elysia_charts.templates (mantenuta compatibilita' all'indietro)
+- aggiunte le opzioni startAngle e clockwise a grafico "pie" per definire l'angolo iniziale e l'orientamento delle fette
+- semplificato serie.stackedWith: ora si chiama solo "stacked" (tenuta compatibilita' all'indietro) ed e' possibile specificare solo "true" per impilare automaticamente con la precedente serie visibile
+- supporto di serie.labelsAnchor anche per assi l ed r (in modo da poter specificare l'allineamento delle label dell'asse)
+- supporto di serie.labelsFormatHandler per specificare una funzione di formattazione delle label (sia per assi l,r che per asse x)
+- supporto migliore axis.labelsRotate con valori negativi
+- gestione corretta visible=true|false in cambiamenti grafici e per gestione stackedWith
+- cambiamento z-index di balloon e label per renderli selezionabili
+- impostato { cursor : "default" } in defaultSeries.label.style e tolto da opzioni forzate
+- bugfix (major): risolte problematiche in interruzione di animazioni (che provocava problemi in caso di interazione col grafico in vari momenti: animazione iniziale, animazioni intermedie, highlight...)
+- bugfix: frameAnchor non funzionava correttamente
+- bugfix: frame tooltip spariva dopo un cambiamento di grafico
+- bugfix: Indexhighlight:bar con mousearea.type=index non funziona
+
+v2.0.7
+- nuova gestione grid. Spostate le impostazioni in opt.features.grid (lasciata compatibilita' con vecchie opzioni),
+  nuove opzioni grid.draw (per nascondere le linee orizzontali e/o verticali), migliorato supporto forceBorder
+  nuova opzione grid.ticks.* per supportare le barrette sugli assi
+- bugfix pie
+- aggiunto startAnimation.type = 'grow' e 'grow2' per barline
+- fix animation.grow
+
+v2.0.8
+- nuova gestione del axis.normalize: ora basato sul numero di cifre significative, i vecchi valori "auto" e "autony" vengono entrambi tradotti con "2"
+- aggiunto startAnimation.subType usato da alcune animazioni. Supportato subType = 0,1,2 per animation.grow (subType = 2 sostituisce type = grow2)
+- aggiunta opzione features.debug.active per attivare debug
+- bugfix nomi serie con maiuscole
+- bugfix animazioni con serie non visibili
+- bugfix divisione per zero in barline
+- bugfix label.frameAnchor top|bottom invertiti
+
+v2.0.9
+- bugfix in normalizzazione configurazioni passate
+- modificato valore di default di indexHighlightProps
+- migliorata gestione positionHandler per tooltip, in modo da gestire la posizione del mouse anche su IE
+- fix posizionamento label su IE (che da problemi con impostazioni opacità, e prima impostava opacity: 1 anche se non ce n'era bisogno)
+
+v2.0.10
+- WARN: necessita di aggiornamento a Raphael1.5
+- supporto transizioni di configurazione per pie
+- supporto pie con serie multiple
+- supporto per series.highlight.restoreSpeed e restoreEasing
+- supporto per tooltip.width="auto" (= 0) e tooltip.height="auto" (= 0) - Disabilita automaticamente frame SVG
+- refactoring gestione slice/archi, con gestione corretta animazione (necessita' feature "customAttribute" di Raphael1.5)
+- fix funnel senza dati o con dati tutti 0
+- fix transizioni in labelmanager e highlightmanager
+
+v2.1.0
+- RENAME da elysia_charts a elycharts
+- fix hightlight.move
+- supporto per serie.anchor.userMouseEnter
+- fix transizioni da serie (e parti di serie) non renderizzate
+- line chart: cambiato supporto per linee arrotondate
+
+v2.1.1
+- fix errore rendering
+- fix highlight con path nascosti

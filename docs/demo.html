@@ -1,0 +1,204 @@
+<html>
+<head>
+<script src="../lib/DP_Debug.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/jquery.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/raphael.js" type="text/javascript" charset="utf-8"></script>
+
+<script src="../src/elycharts_core.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_anchor.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_animation.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_balloon.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_highlight.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_label.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_legend.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_mouse.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_shadow.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_tooltip.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_barline.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_funnel.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_line.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_pie.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_defaults.js" type="text/javascript" charset="utf-8"></script>
+
+<script>
+$(document).ready(function(){
+	var values = [Math.random() * 100,Math.random() * 100,Math.random() * 100];
+	//values[2] = values[1] * Math.random();
+	
+	//values = [1000, 5];
+
+	var tooltips = ['tip1','tip2','tip3'];
+	$("#holder1").chart({
+		type : 'pie', values : values, tooltips : tooltips,
+		labels : ['lab1','lab2','lab3'],
+		legend : ['legenda un bel po lunga','leg2','leg3'],
+		defaultSeries : {
+			//sectorOnMouseOver : function(element, env, i, props) { element.animate({scale: [1.1, 1.1, env.opt.cx, env.opt.cy]}, 500, ">"); },
+			//sectorOnMouseOut : function(element, env, i, props) { element.animate({scale: [1, 1, env.opt.cx, env.opt.cy]}, 500, ">"); },
+			//tooltipProps : { highlightTarget : 0 },
+			plotProps : { opacity : .6 },
+			label : { active : true },
+			highlight : { scale : [ 1.1, 1] }
+			//labelShowOnMouseOver : 1
+		},
+		series : { root : { values : [
+			{ color : 'red' },
+			{ color : 'green' },
+			{ color : 'blue' },
+		] }},
+		features : {
+			legend : {
+				x : 10, y : 10, width : 100, height : 100,
+				defaultDotProps : { type : 'rect', r : 5} 
+			}
+		}
+	});
+
+	$("#holder5").chart({
+		type : 'pie',
+		interactive : false,
+		values : { root : values }, tooltips : { root : tooltips },
+		labels : ['lab1','lab2','lab3'],
+		defaultSeries : {
+			plotProps : { stroke : 'white', "stroke-width" : .5, "fill-opacity" : 1 }
+		},
+		series : { root : { values : [
+			{ color : 'red', plotProps : { fill : 'red' } }, // TODO: color: red non va
+			{ color : 'green', plotProps : { fill : 'green' } },
+			{ color : 'blue', plotProps : { fill : 'blue' } },
+		] }},
+		features : {
+			shadow : { 
+				offset : [1.5, 1.5] // Per attivare l'ombra, [y, x]
+			}
+		}
+	});
+
+	var labels = [], data = [[], [], [], []], tooltips = [[], [], [], []];
+	for (var i = 0; i < 10; i++) {
+		labels[i] = 'L' + i;
+		for (var j = 0; j < 4; j++) {
+			data[j][i] = Math.round(Math.random() * 100);
+			tooltips[j][i] = labels[i] + ' = ' + data[j][i];
+		}
+	}
+	
+	$("#holder2").chart({ type : 'line', labels : labels, values : data, tooltips : tooltips,
+		legend : ['serie 1', 'serie 2', 'serie 3', 'serie 4'],
+		margins: [10,30,65,30],
+		//gridNX : 10,
+		defaultSeries : {
+			lineCenter : 1,
+			barWidthPerc : 75
+		},
+		series : [
+			{type : 'bar', axis : 'r', color : 'blue'},
+			{type : 'bar', axis : 'r', color : 'green', stackedWith : 0 },
+			{type : 'bar', axis : 'l' , color : 'red'},
+			{type : 'line', axis : 'l', color : 'gray', plotProps : { "stroke-width" : 2 } }
+		],
+		barMargins : 10,
+		labelsCenter : 1,
+		defaultAxis : {labels: 1, labelsDistance: 4, labelsRotate: 90},
+		axis : {
+			x : {title : 'Axis X', titleDistance: 25 },
+			l : {title : 'Axis L', titleDistance: 25 },
+			r : {title : 'Axis R', titleDistance: 25 }
+		},
+		features : {
+			legend : { horizontal : true, itemWidth : "auto", x : "auto", width : "auto", y : 370, height : 28 }
+		}
+	});
+	
+/*	
+	var labels = [
+		0, // Si vede
+		'label molto lunga 1',
+		false, false,
+		'label molto lunga 2',
+		0, // Non si vede (coperto da quello sopra)
+		false,
+		'label molto lunga 3', // Non si vede (sborda a destra)
+		0, // Si vede
+		1 // NON Si vede (sborda... per forza)
+	];
+	getChartCanvas("holder3").lineChart(labels, data, tooltips, {
+		margins: [10,30,65,30],
+		//gridNX : 10,
+		defaultPlotProps : {
+			barProps : { "width-perc" : 80 }
+		},
+		plotProps : [
+			{type : 'bar', axis : 'r', color : 'blue'},
+			{type : 'bar', axis : 'r', color : 'green', stackedWith : 0 },
+			{type : 'line', axis : 'l' , color : 'red', behind : 0, fillProps : {opacity : 1} },
+			{type : 'line', axis : 'l', color : 'gray', stackedWith : 2 }
+		],
+		barMargins : 10,
+		defaultAxisProps : { labelsAnchor : "start", labelsHideCovered : 1,  labelsMargin : 2, normalize: 'autony' },
+		gridExtra : [0, 0, 14, 0]
+	});
+	
+	getChartCanvas("holder6").lineChart(labels, data, tooltips, {
+		margins: [10,30,65,30],
+		//gridNX : 10,
+		defaultPlotProps : {
+			barProps : { "width-perc" : 75, "fill-opacity" : 1 }
+		},
+		plotProps : [
+			{type : 'bar', axis : 'r', color : 'blue'},
+			{type : 'bar', axis : 'r', color : 'green', stackedWith : 0 },
+			{type : 'bar', axis : 'l' , color : 'red' },
+			{type : 'bar', axis : 'l', color : 'gray', stackedWith : 2 }
+		],
+		barMargins : 10,
+		defaultAxisProps : { labelsHideCovered : 1,  labelsMargin : 2, normalize: 'auto', labelsSkip: 0 },
+		shadowOffset : [ 2, 2]
+	});
+	
+	getChartCanvas("holder4").lineChart( labels, data, tooltips, {
+		margins: [0,0,0,0],
+		gridNX: 0, gridNY: 0,
+		defaultPlotProps: { rounded: 1, dotProps: false, tooltipProps: false, lineProps : {"stroke-width": 1} }
+	});
+*/
+
+});
+</script>
+
+<style type="text/css" media="screen">
+body {
+    color: black;
+}
+#holder1, #holder2, #holder3, #holder6 {
+		float: left;
+    height: 400px;
+    width: 400px;
+		background-color: #F0F0F0;
+}
+#holder4 {
+	float: left;
+	height: 20px;
+	width: 100px;
+}
+#holder5 {
+	float: left;
+	height: 100px;
+	width: 100px;
+}
+</style>
+
+</head>
+<body>
+	<br />
+	<div id="holder1"></div>
+	<div id="holder2"></div>
+	<div id="t" style="clear:both"></div>
+	<div id="holder3"></div>
+	<div id="holder6"></div>
+	<div id="t" style="clear:both"></div>
+	<div id="holder5"></div>
+	<div id="holder4"></div>
+	<div id="log" style="clear:both"></div>
+</body>
+</html>

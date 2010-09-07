@@ -1,0 +1,470 @@
+<html>
+<head>
+<script src="../lib/DP_Debug.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/jquery.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/raphael.js" type="text/javascript" charset="utf-8"></script>
+
+<script src="../src/elycharts_core.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_anchor.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_animation.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_balloon.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_highlight.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_label.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_legend.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_mouse.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_shadow.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_manager_tooltip.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_barline.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_funnel.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_line.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_chart_pie.js" type="text/javascript" charset="utf-8"></script>
+<script src="../src/elycharts_defaults.js" type="text/javascript" charset="utf-8"></script>
+
+<!--
+<script src="../dist/elycharts.js" type="text/javascript" charset="utf-8"></script>
+<script src="../dist/elycharts.min.js" type="text/javascript" charset="utf-8"></script>
+-->
+
+<script>
+$(document).ready(function(){
+	$("#holder1").chart({
+		type : 'funnel',
+		values : [821,789, 309, 123],
+		margins : [0, 120, 0, 220],
+		tooltips : ['Spedite: 821', 'Ricevute: 789', 'Aperte: 309', 'Cliccate: 123'],
+		//balloons : ['Spedite: 821', 'Ricevute: 789', 'Aperte: 309', 'Cliccate: 123'],
+		balloons : [$("#b1"), $("#b2"), $("#b3"), $("#b4")],
+		labels: ['Spedite', 'Ricevute', 'Aperte', 'Cliccate'],
+
+		rh: 0, // Nessun taglio in prospettiva
+		topSector: 0,
+		bottomSector: .25, // Prolungamento finale del 10%
+		method: 'width', // width o cutarea
+		defaultSeries : {
+			plotProps : { stroke : 'white', 'stroke-width': 2 }, 
+			label : {
+				active : true,
+				html : true,
+				offset : [220, 0],
+				frameAnchor : ['middle', 'top']
+			}, // Mostra o no le label,
+      tooltip : { 
+        //width : 100, height: 40, frameProps : { opacity: .6 }
+        width : 'auto', height: 'auto', frameProps : false
+      },
+      highlight : {
+				//move : 10,
+				scale : [1.1, 1.1]
+			}
+		},
+		series : { root : { values : [
+			{ plotProps : { fill : '0-#6060FF-#6060FF:49.5-#606090:50.5-#606090', opacity: 1 }},
+			{ plotProps : { fill : '0-#8080FF-#8080FF:49.5-#808090:50.5-#808090', opacity: 1 }},
+			{ plotProps : { fill : '0-#A0A0FF-#A0A0FF:49.5-#A0A0B0:50.5-#A0A0B0', opacity: 1 }}
+		] } },
+		bottomSectorProps : {
+			stroke : 'white', 'stroke-width': 2, 
+			fill : '0-#B0B0FF-#B0B0FF:49.5-#B0B0C0:50.5-#B0B0C0', opacity: 1
+		},
+		features : {
+			frameAnimation : {
+				active: true
+			},
+			balloons : { 
+				active : true, 
+				style : { }, 
+				left : 0,
+				width: 200, 
+				padding: [20, 5],
+				// Percorso della linea: [ [ x, y iniziali (rispetto al punto di inizio standard)], ... [x, y intermedi (rispetto al punto di inizio standard)] ..., [x, y finale (rispetto all'angolo del balloon più vicino al punto di inizio)] ]
+				line : [ [ 0, 2 ], [ 30, 30], [140, 30] ],
+				// Proprietà della linea
+				lineProps : { stroke : "gray" } 
+			},
+			tooltip : {
+				positionHandler : function(env, tooltipConf, mouseAreaData, suggestedX, suggestedY) { 
+					return [mouseAreaData.event.pageX, mouseAreaData.event.pageY, true]
+				}
+			}
+		},
+		nop: 0
+	});
+	
+	$("#holder2").chart({
+		type : 'line',
+		margins : [10, 10, 50, 50],
+		values : {
+			a : [1000,2000,3000,5000],
+			b : [3000,4000,1000,2000],
+			c : [4000,3000,2000,1000]
+		},
+		labels : ['a', 'b', 'c', 'd'],
+		tooltips : {
+			a : [1,2,3,4],
+			b : [3,4,1,2],
+			c : [4,3,2,1]
+		},
+		anchors : {
+			a: ['#a', '#a', '#a', '#a'],
+			b: ['#a', '#a', '#a', '#a'],
+			c: ['#a', '#a', '#a', '#a']
+		},
+		//tooltips : ['a', 'b', 'c', 'd'],
+		
+		features : {
+			mousearea : { /*type : 'index'*/ },
+			animation : { 
+				startAnimation : { active : true, propsFrom : { opacity : 0 }, delay: 0 } ,
+				stepAnimation  : { speed : 2000 }
+			},
+			highlight : {
+				/*indexHighlight : 'line',
+				indexHighlightProps : { fill : "none", color : "blue", scale : false, opacity : 1 }*/
+			},
+			grid : {
+				ny : 3,
+				draw : [true, true],
+				forceBorder: false,
+				extra : [20, 20, 20, 20],
+				ticks : {
+					active : true,
+					size : [20, 1],
+					props : { "stroke" : "red" }
+				}
+			}
+		},
+		
+		labelsCenter : true,
+		defaultAxis : {
+			labels : true,
+			labelsCompactUnits : ['k', 'M'],
+			normalize : 'autony'
+			//labelsRotate : -45
+		},
+		axis : {
+			l : { labelsAnchor : 'start', labelsDistance : -8, labelsMargin : 8, labelsSkip : 1 }
+		},
+		
+		defaultSeries : {
+			/*type : 'bar',*/
+			//axis : 'l',
+			plotProps : { "stroke-linecap" : "round" },
+			fill : true,
+			fillProps : {
+				fill : '#FF0000',
+				opacity : .7
+			},
+			dotProps : {
+				fill : '#FF0000',
+				opacity : 0
+			},
+			highlight : {
+				newProps : { fill : 'yellow', opacity : 1 },
+				overlayProps : false
+			},
+			anchor : {
+				addClass : 'high',
+				highlight : 1
+			},
+			startAnimation : {
+				active : true,
+				type : 'reg',
+				speed : 3000,
+				propsFrom : {
+					opacity: .2
+				},
+				fillPropsFrom : {
+					fill : '#0000FF'
+				}
+			},
+			tooltip : {
+				//frameProps : false
+			},
+			stacked : true
+		},
+		series : {
+			/*a : { visible : true },
+			b : { type : 'bar', color : 'blue' },*/
+			b : { fillProps : { fill : 'blue' } },
+			c : {
+				type : 'bar', color : 'green', plotProps : { opacity : .7 }
+			}
+		}
+	});
+	
+	$("#holder3").chart({
+		type : 'pie',
+		
+		values : [1,2,3],
+		
+		tooltips : [1,2,3,4],
+		labels : ['a', 'b', 'c'],
+		anchors : ['#b', '#b', '#b', '#b'],
+		
+		defaultSeries : {
+			plotProps : {
+				fill : 'red'
+			},
+			anchor : {
+				addClass : 'high',
+				highlight : 1
+			},
+			startAnimation : {
+				active : true,
+				type : 'grow',
+				speed : 3000,
+				propsFrom : {
+					opacity: .2
+				},
+				propsTo : {
+					opacity: 1
+				}
+			},
+			tooltip : {
+				frameProps : {
+					opacity : .5
+				}
+			},
+			highlight : {
+				//newProps : { fill : 'yellow' },
+				overlayProps : false,
+				//move : 10
+				scale : [1.1, 1],
+				scaleSpeed : 500,
+				restoreSpeed : 1000
+			},
+			label : {
+				active : true
+				//offset : [100, 100]
+			}
+		},
+		series : { root : { values : [
+			{ plotProps : { fill : 'green' } },
+			{},
+			{}
+		] } },
+		features : {
+			pixelWorkAround : { active : true },
+			tooltip : {
+				//positionHandler : function(env, tooltipConf, mouseAreaData, suggestedX, suggestedY) { return [mouseAreaData.event.pageX, mouseAreaData.event.pageY, true] }
+			}
+		}
+		
+	});
+	
+	$('#holder4').chart({
+    margins: [10, 0, 0, 0],
+		type : 'barline',
+		direction : 'rtl',
+		values : {
+			spedite: [100],
+			ricevute: [80],
+			aperte: [40],
+			cliccate: [20]
+		},
+		tooltips : {
+			spedite : [ 'spedite : 30' ],
+			ricevute: [ 'ricevute : 23' ],
+			aperte: [ 'aperte : 12' ],
+			cliccate: [ 'cliccate : 5' ]
+		},
+		
+		defaultSeries : {
+			plotProps : { "stroke-width" : 0, opacity : 1, stroke : "none", "stroke-opacity" : 0 },
+			highlight : {
+				//overlayProps : { fill: 'white', opacity : .5, stroke : "none"  }
+				move : [0, -20],
+				scale : [1, 2]
+			},
+			startAnimation : {
+				active: true,
+				type: 'grow',
+				subType : 2,
+				propsFrom : { "stroke" : "none", "stroke-width" : 0, "opacity" : 0, "stroke-opacity" : 0 },
+				speed: 2000
+			}
+		},
+		series : {
+			spedite: { plotProps : { fill : 'gray' } },
+			ricevute: { plotProps : { fill : 'red' } },
+			aperte: { plotProps : { fill : 'blue' } },
+			cliccate : { plotProps : { fill : 'green' } }
+		},
+		
+		features : {
+	    pixelWorkAround : { active : false }
+
+		}
+		
+	});
+
+
+	$("#holder6").chart({
+		type : 'pie',
+		
+		values : {
+			a : [1,2,3],
+			b : [2,3,4]
+		},
+		
+		tooltips : {
+			a : [1,2,3],
+			b : [2,3,4]
+		},
+		labels : ['a', 'b', 'c'],
+		anchors : {
+			a : ['#b', '#b', '#b', '#b'],
+			b : ['#b', '#b', '#b', '#b']
+		},
+		
+		defaultSeries : {
+			plotProps : {
+				fill : 'red'
+			},
+			anchor : {
+				addClass : 'high',
+				highlight : 1
+			},
+			startAnimation : {
+				active : true,
+				type : 'grow',
+				speed : 3000,
+				propsFrom : {
+					opacity: .2
+				},
+				propsTo : {
+					opacity: 1
+				}
+			},
+			tooltip : {
+				frameProps : {
+					opacity : .5
+				}
+			},
+			highlight : {
+				//newProps : { fill : 'yellow' },
+				overlayProps : false,
+				//move : 10
+				scale : [1.1, 1],
+				scaleSpeed : 500
+			},
+			label : {
+				active : true
+				//offset : [100, 100]
+			}
+		},
+		series : { 
+			a : { visible: false, values : [
+				{ plotProps : { fill : 'green' } },
+				{},
+				{}
+			] },
+			b : { values : [
+				{ plotProps : { fill : 'yellow' } },
+				{},
+				{}
+			] }
+		},
+		features : {
+			pixelWorkAround : { active : true },
+			tooltip : {
+				//positionHandler : function(env, tooltipConf, mouseAreaData, suggestedX, suggestedY) { return [mouseAreaData.event.pageX, mouseAreaData.event.pageY, true] }
+			}
+		}
+		
+	});
+
+});
+
+
+</script>
+
+<style type="text/css" media="screen">
+body {
+    color: black;
+}
+#holder1, #holder2, #holder3, #holder6 {
+		float: left;
+    height: 400px;
+    width: 400px;
+		background-color: #F0F0F0;
+		border: 1px solid gray;
+		margin-bottom: 1em
+}
+#holder1 {
+	height: 300px;
+	width: 650px;
+	border: none;
+}
+#holder4 {
+	float: left;
+	height: 20px;
+	width: 100px;
+}
+#holder5 {
+	float: left;
+	height: 100px;
+	width: 100px;
+}
+.high {
+	background-color: red;
+}
+
+.b {
+	font-family: arial
+}
+.bn1, .bn2, .bn3, .bn4 {
+	background-color:white; float: left
+}
+.bn1, .bn3 {
+	width: 75px; color: blue; text-align: right;
+}
+.bn2, .bn4 {
+	color: gray; padding: 0 4px;
+}
+.bn1, .bn2 {
+	font-size: 20px; height: 20px; line-height: 20px;
+}
+.bn3, .bn4 {
+	font-size: 12px; height: 12px; line-height: 18px;
+}
+
+</style>
+
+</head>
+<body>
+	<div id="b1" class="b">
+		<div class="bn1">44.250</div><div class="bn2">sent</div>
+	</div>
+	<div id="b2" class="b">
+		<div class="bn1">41.250</div><div class="bn2">delivered</div>
+		<div style="clear: both"></div>
+		<div class="bn3">2.500</div><div class="bn4">bounced</div>
+	</div>
+	<div id="b3" class="b">
+		<div class="bn1">15.424</div><div class="bn2">opened</div>
+		<div style="clear: both"></div>
+		<div class="bn3">32.500</div><div class="bn4">not opened</div>
+	</div>
+	<div id="b4" class="b">
+		<div class="bn1">4.560</div><div class="bn2">clicked</div>
+		<div style="clear: both"></div>
+		<div class="bn3">12.500</div><div class="bn4">not clicked</div>
+	</div>
+
+	<br />
+	<div id="a">AAA</div>
+	<div id="holder1"></div>
+	<div id="holder2"></div>
+	<div id="t" style="clear:both"></div>
+	<div id="b">BBB</div>
+	<div id="holder3"></div>
+	<div id="holder6"></div>
+	<div id="t" style="clear:both"></div>
+	<br /><br />
+	<div id="holder5"></div>
+	<div id="holder4"></div>
+	<div id="log" style="clear:both"></div>
+	<br /><br />
+</body>
+</html>
