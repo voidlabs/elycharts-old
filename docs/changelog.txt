@@ -110,3 +110,6 @@ v2.1.1
 - script per riunificazione e minimizzazione codice da distribuire
 - fix errore rendering
 - fix highlight con path nascosti
+- fix gestione colori in line chart
+- supporto opzione "valueThreshold" per pie chart
+- fix pie slice di 360 gradi

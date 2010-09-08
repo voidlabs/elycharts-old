@@ -122,7 +122,7 @@ $.elycharts.tooltipmanager = {
       return;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
-      return this.hide(env, serie, index, mouseAreaData, props);
+      return this.onMouseExit(env, serie, index, mouseAreaData);
         
     var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
     
@@ -143,7 +143,7 @@ $.elycharts.tooltipmanager = {
       return;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
-      return this.hide(env, serie, index, mouseAreaData, props);
+      return this.onMouseExit(env, serie, index, mouseAreaData);
         
     var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
     

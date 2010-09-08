@@ -384,6 +384,8 @@ $.elycharts.templates = {
     startAngle : 0,
     // Disegna la torta con le fette in senso orario (invece dell'orientamento standard per gradi, in senso antiorario)
     clockwise : false,
+    // Soglia (rapporto sul totale) entro la quale una fetta non viene visualizzata
+    valueThresold : 0.006,
     
 		defaultSeries : {
 			// r: .5, raggio usato solo per questo spicchio, se <=1 e' in rapporto al raggio generale

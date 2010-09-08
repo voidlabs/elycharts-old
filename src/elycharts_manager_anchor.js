@@ -19,10 +19,18 @@ $.elycharts.anchormanager = {
   afterShow : function(env, pieces) {
     // Prendo le aree gestite da mouseAreas, e metto i miei listener
     // Non c'e' bisogno di gestire il clean per una chiamata successiva, lo fa gia' il mouseareamanager
-    // TODO Pero' l'unbind precedente andrebbe fatto, e come fa ora fa l'unbind anche di funzioni non nostre
+    // Tranne per i bind degli eventi jquery
 
     if (!env.opt.anchors)
       return;
+      
+    if (!env.anchorBinds)
+      env.anchorBinds = [];
+    
+    while (env.anchorBinds.length) {
+      var b = env.anchorBinds.pop();
+      $(b[0]).unbind(b[1], b[2]);
+    }
     
     for (var i = 0; i < env.mouseAreas.length; i++) {
       var serie = env.mouseAreas[i].piece ? env.mouseAreas[i].piece.serie : false;
@@ -34,15 +42,19 @@ $.elycharts.anchormanager = {
       if (anc && env.mouseAreas[i].props.anchor && env.mouseAreas[i].props.anchor.highlight) {
         
         (function(env, mouseAreaData, anc, caller) {
-          // TODO Dovrebbe fare l'unbind solo delle sue funzioni
-          $(anc).unbind();
           
+          var f1 = function() { caller.anchorMouseOver(env, mouseAreaData); };
+          var f2 = function() { caller.anchorMouseOut(env, mouseAreaData); };
           if (!env.mouseAreas[i].props.anchor.useMouseEnter) {
-            $(anc).mouseover(function() { caller.anchorMouseOver(env, mouseAreaData); });
-            $(anc).mouseout(function() { caller.anchorMouseOut(env, mouseAreaData); });
+            env.anchorBinds.push([anc, 'mouseover', f1]);
+            env.anchorBinds.push([anc, 'mouseout', f2]);
+            $(anc).mouseover(f1);
+            $(anc).mouseout(f2);
           } else {
-            $(anc).mouseenter(function() { caller.anchorMouseOver(env, mouseAreaData); });
-            $(anc).mouseleave(function() { caller.anchorMouseOut(env, mouseAreaData); });
+            env.anchorBinds.push([anc, 'mouseenter', f1]);
+            env.anchorBinds.push([anc, 'mouseleave', f2]);
+            $(anc).mouseenter(f1);
+            $(anc).mouseleave(f2);
           }
         })(env, env.mouseAreas[i], anc, this);
       }

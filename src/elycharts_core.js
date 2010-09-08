@@ -172,7 +172,7 @@ function _normalizeOptionsColor($options, $section) {
     
     if (!$section.plotProps)
       $section.plotProps = {};
-    if ($section.type == 'line') {
+    if ($section.type == 'line' || ($options.type == 'line' && !$section.type)) {
       if ($section.plotProps && !$section.plotProps.stroke)
         $section.plotProps.stroke = color;
     } else {
@@ -194,7 +194,7 @@ function _normalizeOptionsColor($options, $section) {
     if ($section.legend.dotProps && !$section.legend.dotProps.fill)
       $section.legend.dotProps.fill = color;
       
-    if ($options.type == 'line' && $section.type == 'line') {
+    if ($options.type == 'line' && ($section.type == 'line' || !$section.type)) {
       if (!$section.dotProps)
         $section.dotProps = {};
       if ($section.dotProps && !$section.dotProps.fill)
@@ -269,6 +269,9 @@ $.elycharts.common = {
       var flag = (a2 - a1) > 180;
       a1 = (a1 % 360) * Math.PI / 180;
       a2 = (a2 % 360) * Math.PI / 180;
+      // Se i due angoli risultano uguali ma inizialmente erano diversi significa che c'e' un giro intero (es: 0-360), che va rappresentato
+      if (a1 == a2 && aa1 != aa2)
+        a2 += 359.99 * Math.PI / 180;
       
       return { path : rint ? [
         ["M", cx + r * Math.cos(a1), cy + r * Math.sin(a1)], 
@@ -491,7 +494,7 @@ $.elycharts.common = {
       }
       path.push([ "C", anc[0], anc[1], points[jj][0], points[jj][1], points[jj][0], points[jj][1] ]);
       
-      path = this.linepathRevert(path);
+      //path = this.linepathRevert(path);
       
     } else {
       var path = [];

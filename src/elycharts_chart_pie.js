@@ -45,7 +45,7 @@ $.elycharts.pie = {
               plot.total += plot.values[i];
           }
         for (var i = 0; i < ii; i++)
-          if (plot.values[i] < plot.total * 0.006) {
+          if (plot.values[i] < plot.total * opt.valueThresold) {
             plot.total = plot.total - plot.values[i];
             plot.values[i] = 0;
           }

@@ -156,12 +156,22 @@ $(document).ready(function(){
 		shadowOffset : [ 2, 2]
 	});
 	
-	getChartCanvas("holder4").lineChart( labels, data, tooltips, {
-		margins: [0,0,0,0],
-		gridNX: 0, gridNY: 0,
-		defaultPlotProps: { rounded: 1, dotProps: false, tooltipProps: false, lineProps : {"stroke-width": 1} }
-	});
 */
+	$("#holder4").chart( {
+		type : 'line',
+		labels: labels, values: data, tooltips: tooltips, 
+		margins: [0,0,0,0],
+		features : {
+		  grid : { nx: 0, ny: 0 }
+		},
+		defaultSeries: { rounded: 1, dot: false, fill: true, tooltipProps: false, plotProps : {"stroke-width": 1} },
+		series : [
+			{axis : 'r', color : 'blue' },
+			{axis : 'r', color : 'green', stacked: true },
+			{axis : 'l' , color : 'red'},
+			{axis : 'l', color : 'gray' }
+		],
+	});
 
 });
 </script>
@@ -194,9 +204,9 @@ body {
 	<div id="holder1"></div>
 	<div id="holder2"></div>
 	<div id="t" style="clear:both"></div>
-	<div id="holder3"></div>
+	<!-- <div id="holder3"></div>
 	<div id="holder6"></div>
-	<div id="t" style="clear:both"></div>
+	<div id="t" style="clear:both"></div>-->
 	<div id="holder5"></div>
 	<div id="holder4"></div>
 	<div id="log" style="clear:both"></div>

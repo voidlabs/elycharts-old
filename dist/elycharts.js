@@ -384,6 +384,8 @@ $.elycharts.templates = {
     startAngle : 0,
     // Disegna la torta con le fette in senso orario (invece dell'orientamento standard per gradi, in senso antiorario)
     clockwise : false,
+    // Soglia (rapporto sul totale) entro la quale una fetta non viene visualizzata
+    valueThresold : 0.006,
     
 		defaultSeries : {
 			// r: .5, raggio usato solo per questo spicchio, se <=1 e' in rapporto al raggio generale
@@ -591,7 +593,7 @@ function _normalizeOptionsColor($options, $section) {
     
     if (!$section.plotProps)
       $section.plotProps = {};
-    if ($section.type == 'line') {
+    if ($section.type == 'line' || ($options.type == 'line' && !$section.type)) {
       if ($section.plotProps && !$section.plotProps.stroke)
         $section.plotProps.stroke = color;
     } else {
@@ -613,7 +615,7 @@ function _normalizeOptionsColor($options, $section) {
     if ($section.legend.dotProps && !$section.legend.dotProps.fill)
       $section.legend.dotProps.fill = color;
       
-    if ($options.type == 'line' && $section.type == 'line') {
+    if ($options.type == 'line' && ($section.type == 'line' || !$section.type)) {
       if (!$section.dotProps)
         $section.dotProps = {};
       if ($section.dotProps && !$section.dotProps.fill)
@@ -688,6 +690,9 @@ $.elycharts.common = {
       var flag = (a2 - a1) > 180;
       a1 = (a1 % 360) * Math.PI / 180;
       a2 = (a2 % 360) * Math.PI / 180;
+      // Se i due angoli risultano uguali ma inizialmente erano diversi significa che c'e' un giro intero (es: 0-360), che va rappresentato
+      if (a1 == a2 && aa1 != aa2)
+        a2 += 359.99 * Math.PI / 180;
       
       return { path : rint ? [
         ["M", cx + r * Math.cos(a1), cy + r * Math.sin(a1)], 
@@ -910,7 +915,7 @@ $.elycharts.common = {
       }
       path.push([ "C", anc[0], anc[1], points[jj][0], points[jj][1], points[jj][0], points[jj][1] ]);
       
-      path = this.linepathRevert(path);
+      //path = this.linepathRevert(path);
       
     } else {
       var path = [];
@@ -1606,10 +1611,18 @@ $.elycharts.anchormanager = {
   afterShow : function(env, pieces) {
     // Prendo le aree gestite da mouseAreas, e metto i miei listener
     // Non c'e' bisogno di gestire il clean per una chiamata successiva, lo fa gia' il mouseareamanager
-    // TODO Pero' l'unbind precedente andrebbe fatto, e come fa ora fa l'unbind anche di funzioni non nostre
+    // Tranne per i bind degli eventi jquery
 
     if (!env.opt.anchors)
       return;
+      
+    if (!env.anchorBinds)
+      env.anchorBinds = [];
+    
+    while (env.anchorBinds.length) {
+      var b = env.anchorBinds.pop();
+      $(b[0]).unbind(b[1], b[2]);
+    }
     
     for (var i = 0; i < env.mouseAreas.length; i++) {
       var serie = env.mouseAreas[i].piece ? env.mouseAreas[i].piece.serie : false;
@@ -1621,15 +1634,19 @@ $.elycharts.anchormanager = {
       if (anc && env.mouseAreas[i].props.anchor && env.mouseAreas[i].props.anchor.highlight) {
         
         (function(env, mouseAreaData, anc, caller) {
-          // TODO Dovrebbe fare l'unbind solo delle sue funzioni
-          $(anc).unbind();
           
+          var f1 = function() { caller.anchorMouseOver(env, mouseAreaData); };
+          var f2 = function() { caller.anchorMouseOut(env, mouseAreaData); };
           if (!env.mouseAreas[i].props.anchor.useMouseEnter) {
-            $(anc).mouseover(function() { caller.anchorMouseOver(env, mouseAreaData); });
-            $(anc).mouseout(function() { caller.anchorMouseOut(env, mouseAreaData); });
+            env.anchorBinds.push([anc, 'mouseover', f1]);
+            env.anchorBinds.push([anc, 'mouseout', f2]);
+            $(anc).mouseover(f1);
+            $(anc).mouseout(f2);
           } else {
-            $(anc).mouseenter(function() { caller.anchorMouseOver(env, mouseAreaData); });
-            $(anc).mouseleave(function() { caller.anchorMouseOut(env, mouseAreaData); });
+            env.anchorBinds.push([anc, 'mouseenter', f1]);
+            env.anchorBinds.push([anc, 'mouseleave', f2]);
+            $(anc).mouseenter(f1);
+            $(anc).mouseleave(f2);
           }
         })(env, env.mouseAreas[i], anc, this);
       }
@@ -2989,7 +3006,7 @@ $.elycharts.tooltipmanager = {
       return;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
-      return this.hide(env, serie, index, mouseAreaData, props);
+      return this.onMouseExit(env, serie, index, mouseAreaData);
         
     var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
     
@@ -3010,7 +3027,7 @@ $.elycharts.tooltipmanager = {
       return;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
-      return this.hide(env, serie, index, mouseAreaData, props);
+      return this.onMouseExit(env, serie, index, mouseAreaData);
         
     var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
     
@@ -3490,7 +3507,6 @@ $.elycharts.line = {
           pieces.push({ section : 'Series', serie : serie, subSection : 'Dot', path : false, attr : false });
       }
     }
-    
     featuresmanager.beforeShow(env, pieces);
     common.show(env, pieces);
     featuresmanager.afterShow(env, pieces);
@@ -3716,7 +3732,7 @@ $.elycharts.pie = {
               plot.total += plot.values[i];
           }
         for (var i = 0; i < ii; i++)
-          if (plot.values[i] < plot.total * 0.006) {
+          if (plot.values[i] < plot.total * opt.valueThresold) {
             plot.total = plot.total - plot.values[i];
             plot.values[i] = 0;
           }

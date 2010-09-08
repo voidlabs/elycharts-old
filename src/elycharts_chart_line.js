@@ -250,7 +250,6 @@ $.elycharts.line = {
           pieces.push({ section : 'Series', serie : serie, subSection : 'Dot', path : false, attr : false });
       }
     }
-    
     featuresmanager.beforeShow(env, pieces);
     common.show(env, pieces);
     featuresmanager.afterShow(env, pieces);
