@@ -32,7 +32,7 @@ $.elycharts.animationmanager = {
   _stepAnimationInt : function(env, pieces1, pieces2, section, serie, internal) {
     // Se pieces2 == null deve essere nascosto tutto pieces1
 
-    var newpieces = [];
+    var newpieces = [], newpiece;
     var j = 0;
     for (var i = 0; i < pieces1.length; i ++) {
       var animationProps = common.areaProps(env, section ? section : pieces1[i].section, serie ? serie : pieces1[i].serie);
@@ -49,7 +49,7 @@ $.elycharts.animationmanager = {
           pieces1[i].show = false;
           newpieces.push(pieces1[i]);
         } else {
-          var newpiece = { path : false, attr : false, show : true };
+          newpiece = { path : false, attr : false, show : true };
           newpiece.animation = {
             element : pieces1[i].element ? pieces1[i].element : false,
             speed : animationProps && animationProps.speed ? animationProps.speed : 300,
@@ -61,7 +61,7 @@ $.elycharts.animationmanager = {
       }
       // Bisogna gestire la transizione dal vecchio piece al nuovo
       else {
-        var newpiece = pieces2 ? pieces2[j] : { path : false, attr : false };
+        newpiece = pieces2 ? pieces2[j] : { path : false, attr : false };
         newpiece.show = true;
         if (typeof pieces1[i].paths == 'undefined') {
           // Piece a singolo path
@@ -146,22 +146,23 @@ $.elycharts.animationmanager = {
   
   animationGrow : function(env, props, piece) {
     this._animationPiece(piece, props, piece.subSection);
+    var i, npath, y;
     
     switch (env.opt.type) {
       case 'line':
-        var y = env.opt.height - env.opt.margins[2];
+        y = env.opt.height - env.opt.margins[2];
         switch (piece.subSection) {
           case 'Plot':
             if (!piece.paths) {
                 //for (var i = 0; i < piece.path.length; i++)
                 //  piece.animation.startPath.push([i == 0 ? "M" : "L", piece.path[i][piece.path[i].length - 2], y]);
-                var npath = [ 'LINE', [], piece.path[0][2]];
-                for (var i = 0; i < piece.path[0][1].length; i++)
+                npath = [ 'LINE', [], piece.path[0][2]];
+                for (i = 0; i < piece.path[0][1].length; i++)
                   npath[1].push([ piece.path[0][1][i][0], y ]);
                 piece.animation.startPath.push(npath);
 
             } else {
-              for (var i = 0; i < piece.paths.length; i++)
+              for (i = 0; i < piece.paths.length; i++)
                 if (piece.paths[i].path)
                   piece.paths[i].animation.startPath.push([ 'RECT', piece.paths[i].path[0][1], y, piece.paths[i].path[0][3], y ]);
             }
@@ -178,8 +179,8 @@ $.elycharts.animationmanager = {
                   piece.animation.startPath.push([ 'L', common.getX(piece.path[i]), y ]); break;
               }
             */
-            var npath = [ 'LINEAREA', [], [], piece.path[0][3]];
-            for (var i = 0; i < piece.path[0][1].length; i++) {
+            npath = [ 'LINEAREA', [], [], piece.path[0][3]];
+            for (i = 0; i < piece.path[0][1].length; i++) {
               npath[1].push([ piece.path[0][1][i][0], y ]);
               npath[2].push([ piece.path[0][2][i][0], y ]);
             }
@@ -187,7 +188,7 @@ $.elycharts.animationmanager = {
             
             break;
           case 'Dot':
-            for (var i = 0; i < piece.paths.length; i++)
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path)
                 piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], y, piece.paths[i].path[0][3]]);
             break;
@@ -196,7 +197,7 @@ $.elycharts.animationmanager = {
         
       case 'pie':
         if (piece.subSection == 'Plot')
-          for (var i = 0; i < piece.paths.length; i++)
+          for (i = 0; i < piece.paths.length; i++)
             if (piece.paths[i].path)
               piece.paths[i].animation.startPath.push([ 'SLICE', piece.paths[i].path[0][1], piece.paths[i].path[0][2], piece.paths[i].path[0][4] + piece.paths[i].path[0][3] * 0.1, piece.paths[i].path[0][4], piece.paths[i].path[0][5], piece.paths[i].path[0][6] ]);
             
@@ -207,17 +208,18 @@ $.elycharts.animationmanager = {
         break;
 
       case 'barline':
+        var x;
         if (piece.section == 'Series' && piece.subSection == 'Plot') {
           if (!props.subType)
-            var x = env.opt.direction != 'rtl' ? env.opt.margins[3] : env.opt.width - env.opt.margins[1];
+            x = env.opt.direction != 'rtl' ? env.opt.margins[3] : env.opt.width - env.opt.margins[1];
           else if (props.subType == 1)
-            var x = env.opt.direction != 'rtl' ? env.opt.width - env.opt.margins[1] : env.opt.margins[3];
-          for (var i = 0; i < piece.paths.length; i++)
+            x = env.opt.direction != 'rtl' ? env.opt.width - env.opt.margins[1] : env.opt.margins[3];
+          for (i = 0; i < piece.paths.length; i++)
             if (piece.paths[i].path) {
               if (!props.subType || props.subType == 1)
                 piece.paths[i].animation.startPath.push([ 'RECT', x, piece.paths[i].path[0][2], x, piece.paths[i].path[0][4], piece.paths[i].path[0][5] ]);
               else {
-                var y = (piece.paths[i].path[0][2] + piece.paths[i].path[0][4]) / 2;
+                y = (piece.paths[i].path[0][2] + piece.paths[i].path[0][4]) / 2;
                 piece.paths[i].animation.startPath.push([ 'RECT', piece.paths[i].path[0][1], y, piece.paths[i].path[0][3], y, piece.paths[i].path[0][5] ]);
               }
             }
@@ -228,11 +230,11 @@ $.elycharts.animationmanager = {
   },
 
   _animationAvgXYArray : function(arr) {
-    var res = [], avg = 0;
-    for (var i = 0; i < arr.length; i++)
+    var res = [], avg = 0, i;
+    for (i = 0; i < arr.length; i++)
       avg += arr[i][1];
     avg = avg / arr.length;
-    for (var i = 0; i < arr.length; i++)
+    for (i = 0; i < arr.length; i++)
       res.push([ arr[i][0], avg ]);
     return res;
   },
@@ -240,7 +242,7 @@ $.elycharts.animationmanager = {
   animationAvg : function(env, props, piece) {
     this._animationPiece(piece, props, piece.subSection);
     
-    var avg = 0;
+    var avg = 0, i, l;
     switch (env.opt.type) {
       case 'line':
         switch (piece.subSection) {
@@ -258,14 +260,14 @@ $.elycharts.animationmanager = {
 
             } else {
               // BAR
-              var l = 0;
-              for (var i = 0; i < piece.paths.length; i++)
+              l = 0;
+              for (i = 0; i < piece.paths.length; i++)
                 if (piece.paths[i].path) {
                   l ++;
                   avg += piece.paths[i].path[0][2];
                 }
               avg = avg / l;
-              for (var i = 0; i < piece.paths.length; i++)
+              for (i = 0; i < piece.paths.length; i++)
                 if (piece.paths[i].path)
                   piece.paths[i].animation.startPath.push([ "RECT", piece.paths[i].path[0][1], avg, piece.paths[i].path[0][3], piece.paths[i].path[0][4] ]);
             }
@@ -290,14 +292,14 @@ $.elycharts.animationmanager = {
             break;
 
           case 'Dot':
-            var l = 0;
-            for (var i = 0; i < piece.paths.length; i++)
+            l = 0;
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path) {
                 l ++;
                 avg += piece.paths[i].path[0][2];
               }
             avg = avg / l;
-            for (var i = 0; i < piece.paths.length; i++)
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path)
                 piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], avg, piece.paths[i].path[0][3]]);
             break;
@@ -308,7 +310,7 @@ $.elycharts.animationmanager = {
         var delta = 360 / piece.paths.length;
       
         if (piece.subSection == 'Plot')
-          for (var i = 0; i < piece.paths.length; i++)
+          for (i = 0; i < piece.paths.length; i++)
             if (piece.paths[i].path)
               piece.paths[i].animation.startPath.push([ 'SLICE', piece.paths[i].path[0][1], piece.paths[i].path[0][2], piece.paths[i].path[0][3], piece.paths[i].path[0][4], i * delta, (i + 1) * delta ]);
         
@@ -338,6 +340,8 @@ $.elycharts.animationmanager = {
 
   animationReg : function(env, props, piece) {
     this._animationPiece(piece, props, piece.subSection);
+    var i, c, y1, y2;
+    
     switch (env.opt.type) {
       case 'line':
         switch (piece.subSection) {
@@ -356,13 +360,15 @@ $.elycharts.animationmanager = {
               
             } else {
               // BAR
-              var c = piece.paths.length;
-              var y1 = common.getY(piece.paths[0].path[0]);
-              var y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
-              
-              for (var i = 0; i < piece.paths.length; i++)
-                if (piece.paths[i].path)
-                  piece.paths[i].animation.startPath.push([ "RECT", piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3], piece.paths[i].path[0][4] ]);
+              c = piece.paths.length;
+              if (c > 1) {
+                y1 = common.getY(piece.paths[0].path[0]);
+                y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
+
+                for (i = 0; i < piece.paths.length; i++)
+                  if (piece.paths[i].path)
+                    piece.paths[i].animation.startPath.push([ "RECT", piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3], piece.paths[i].path[0][4] ]);
+              }
             }
             break;
 
@@ -383,11 +389,11 @@ $.elycharts.animationmanager = {
             break;
 
           case 'Dot':
-            var c = piece.paths.length;
-            var y1 = common.getY(piece.paths[0].path[0]);
-            var y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
+            c = piece.paths.length;
+            y1 = common.getY(piece.paths[0].path[0]);
+            y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
             
-            for (var i = 0; i < piece.paths.length; i++)
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path)
                 piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3]]);
             break;

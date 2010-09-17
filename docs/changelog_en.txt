@@ -1,0 +1,16 @@
+v2.1.1
+- REFACTORING: true modular management, code split in several components
+- script to build library in single form and in minimized single form
+- fix rendering errors
+- fix highlight in hidden paths
+- fix color management in line chart
+- support for "valueThresold" option in pie chart
+- fix drawing 360 degrees pie slice
+- improvements in anchorManager for bind support (fix when transitions occours)
+- fix manager tooltip
+- line chart: support for rounded : Array, to set a different method of rounding ( [#, 2] is for method suggested by Bago )
+- fix in number precision and sharpening for axis min/max and label calculations [#4]
+- fix in reg animation with only 1 value
+- fix in label rendering when hiding all series and re-showing one [#1]
+- fix in funnel highlight animation [#2]
+- code cleanup

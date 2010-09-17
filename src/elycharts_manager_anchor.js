@@ -34,10 +34,11 @@ $.elycharts.anchormanager = {
     
     for (var i = 0; i < env.mouseAreas.length; i++) {
       var serie = env.mouseAreas[i].piece ? env.mouseAreas[i].piece.serie : false;
+      var anc;
       if (serie)
-        var anc = env.opt.anchors[serie][env.mouseAreas[i].index];
+        anc = env.opt.anchors[serie][env.mouseAreas[i].index];
       else
-        var anc = env.opt.anchors[env.mouseAreas[i].index];
+        anc = env.opt.anchors[env.mouseAreas[i].index];
         
       if (anc && env.mouseAreas[i].props.anchor && env.mouseAreas[i].props.anchor.highlight) {
         
@@ -76,11 +77,12 @@ $.elycharts.anchormanager = {
       return;
 
     if (mouseAreaData.props.anchor && mouseAreaData.props.anchor.addClass) {
-      var serie = mouseAreaData.piece ? mouseAreaData.piece.serie : false;
+      //var serie = mouseAreaData.piece ? mouseAreaData.piece.serie : false;
+      var anc;
       if (serie)
-        var anc = env.opt.anchors[serie][mouseAreaData.index];
+        anc = env.opt.anchors[serie][mouseAreaData.index];
       else
-        var anc = env.opt.anchors[mouseAreaData.index];
+        anc = env.opt.anchors[mouseAreaData.index];
       if (anc) {
         $(anc).addClass(mouseAreaData.props.anchor.addClass);
         env.onAnchors.push([anc, mouseAreaData.props.anchor.addClass]);

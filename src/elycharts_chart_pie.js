@@ -25,9 +25,9 @@ $.elycharts.pie = {
  		var cx = env.opt.cx ? env.opt.cx : Math.floor(w / 2);
 		var cy = env.opt.cy ? env.opt.cx : Math.floor(h / 2);
     
-    var cnt = 0;
-    for (var serie in opt.values) {
-      var plot = {
+    var cnt = 0, i, ii, serie, plot, props;
+    for (serie in opt.values) {
+      plot = {
         visible : false,
         total : 0,
         values : []
@@ -38,13 +38,13 @@ $.elycharts.pie = {
         plot.visible = true;
         cnt ++;
         plot.values = opt.values[serie];
-        for (var i = 0, ii = plot.values.length; i < ii; i++)
+        for (i = 0, ii = plot.values.length; i < ii; i++)
           if (plot.values[i] > 0) {
-            var props = common.areaProps(env, 'Series', serie, i);
+            props = common.areaProps(env, 'Series', serie, i);
             if (typeof props.inside == 'undefined' || props.inside < 0)
               plot.total += plot.values[i];
           }
-        for (var i = 0; i < ii; i++)
+        for (i = 0; i < ii; i++)
           if (plot.values[i] < plot.total * opt.valueThresold) {
             plot.total = plot.total - plot.values[i];
             plot.values[i] = 0;
@@ -56,8 +56,8 @@ $.elycharts.pie = {
     var rstart = -rstep, rend = 0;
       
     var pieces = [];
-    for (var serie in opt.values) {
-      var plot = env.plots[serie];
+    for (serie in opt.values) {
+      plot = env.plots[serie];
       var paths = [];
       if (plot.visible) {
         rstart += rstep;
@@ -65,14 +65,14 @@ $.elycharts.pie = {
         var angle = env.opt.startAngle, angleplus = 0, anglelimit = 0;
       
         if (plot.total == 0) {
-          var props = common.areaProps(env, 'Series', 'empty');
+          props = common.areaProps(env, 'Series', 'empty');
           paths.push({ path : [ [ 'CIRCLE', cx, cy, r ] ], attr : props.plotProps });
 
         } else {
-          for (var i = 0, ii = plot.values.length; i < ii; i++) {
+          for (i = 0, ii = plot.values.length; i < ii; i++) {
             var value = plot.values[i];
             if (value > 0) {
-              var props = common.areaProps(env, 'Series', serie, i);
+              props = common.areaProps(env, 'Series', serie, i);
               if (typeof props.inside == 'undefined' || props.inside < 0) {
                 angle += anglelimit;
                 angleplus = 360 * value / plot.total;
@@ -106,7 +106,7 @@ $.elycharts.pie = {
       } else {
         // Even if serie is not visible it's better to put some empty path (for better transitions). It's not mandatory, just better
         if (opt.values[serie] && opt.values[serie].length)
-          for (var i = 0, ii = opt.values[serie].length; i < ii; i++)
+          for (i = 0, ii = opt.values[serie].length; i < ii; i++)
             paths.push({ path : false, attr : false });
       }
 

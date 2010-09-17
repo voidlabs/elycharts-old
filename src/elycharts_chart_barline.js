@@ -57,8 +57,8 @@ $.elycharts.barline = {
       maxvalue = 1;
       
     var pieces = [];
-    for (var serie in opt.values) {
-      var plot = env.plots[serie];
+    for (serie in opt.values) {
+      plot = env.plots[serie];
       var d = (env.xmax - env.xmin) / maxvalue;
       if (opt.direction != 'rtl')
         pieces.push({

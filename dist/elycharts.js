@@ -467,13 +467,14 @@ $.fn.chart = function($options) {
 }
 
 function _initEnv($container, $options) {
+  var k;
   // Compatibility with old $.elysia_charts.default_options and $.elysia_charts.templates
   if ($.elysia_charts) {
     if ($.elysia_charts.default_options)
-      for (var k in $.elysia_charts.default_options)
+      for (k in $.elysia_charts.default_options)
         $.elycharts.templates[k] = $.elysia_charts.default_options[k];
     if ($.elysia_charts.templates)
-      for (var k in $.elysia_charts.templates)
+      for (k in $.elysia_charts.templates)
         $.elycharts.templates[k] = $.elysia_charts.templates[k];
   }
 
@@ -603,7 +604,7 @@ function _normalizeOptionsColor($options, $section) {
       
     if (!$section.tooltip)
       $section.tooltip = {};
-    if (!$section.tooltip.frameProps);
+    if (!$section.tooltip.frameProps)
       $section.tooltip.frameProps = {};
     if ($section.tooltip && $section.tooltip.frameProps && !$section.tooltip.frameProps.stroke)
       $section.tooltip.frameProps.stroke = color;
@@ -637,52 +638,6 @@ $.elycharts.common = {
   _RaphaelInstance : function(c, w, h) {
     var r = Raphael(c, w, h);
 
-    /*r.customAttributes.line = function ( points, rounded ) {
-      console.warn("" + points, points, "" + points == "NaN");
-      if ("" + points == "NaN")
-        console.trace();
-      var path = [];
-      var last = false;
-      for (var i = 0; i < points.length; i++) {
-        var x = points[i][0], y = points[i][1];
-        if (!rounded || !last)
-          path.push([i == 0 ? "M" : "L", x, y]);
-        else
-          path.push(["C", last[0] + rounded, last[1], x - rounded, y, x, y]);
-        last = [x, y];
-      }
-      
-      console.warn(path);
-      return { path : path };
-    };
-
-    r.customAttributes.linearea = function ( points1, points2, rounded ) {
-      return {};
-      var path = [];
-      var last = false;
-      
-      for (var i = 0; i < points1.length; i++) {
-        var x = points1[i][0], y = points1[i][1];
-        if (!rounded || !last)
-          path.push([i == 0 ? "M" : "L", x, y]);
-        else
-          path.push(["C", last[0] + rounded, last[1], x - rounded, y, x, y]);
-        last = [x, y];
-      }
-      last = false;
-      for (i = points2.length - 1; i >= 0; i--) {
-        var x = points2[i][0], y = points2[i][1];
-        if (!rounded || !last)
-          path.push(["L", x, y]);
-        else
-          path.push(["C", last[0] - rounded, last[1], x + rounded, y, x, y]);
-        last = [x, y];
-      }
-      path.push(['z']);
-      console.warn(path);
-      return { path : path };
-    };*/
-    
     r.customAttributes.slice = function (cx, cy, r, rint, aa1, aa2) {
       // Method body is for clockwise angles, but parameters passed are ccw
       a1 = 360 - aa2; a2 = 360 - aa1;
@@ -815,13 +770,15 @@ $.elycharts.common = {
    * di tutti i defaults innestati.
    */
   areaProps : function(env, section, serie, index, subsection) {
+    var props;
+
     // TODO fare una cache e fix del toLowerCase (devono solo fare la prima lettera
     if (!subsection) {
       if (typeof serie == 'undefined' || !serie)
-        var props = env.opt[section.toLowerCase()];
+        props = env.opt[section.toLowerCase()];
 
       else {
-        var props = this._clone(env.opt['default' + section]);
+        props = this._clone(env.opt['default' + section]);
         if (env.opt[section .toLowerCase()] && env.opt[section.toLowerCase()][serie])
           props = this._mergeObjects(props, env.opt[section.toLowerCase()][serie]);
 
@@ -830,7 +787,7 @@ $.elycharts.common = {
       }
 
     } else {
-      var props = this._clone(env.opt[subsection.toLowerCase()]);
+      props = this._clone(env.opt[subsection.toLowerCase()]);
       
       if (typeof serie == 'undefined' || !serie) {
         if (env.opt[section.toLowerCase()] && env.opt[section.toLowerCase()][subsection.toLowerCase()])
@@ -857,12 +814,27 @@ $.elycharts.common = {
   },
   
   linepathAnchors : function(p1x, p1y, p2x, p2y, p3x, p3y, rounded) {
+    var method = 1;
+    if (rounded && rounded.length) {
+      method = rounded[1];
+      rounded = rounded[0];
+    }
+    if (!rounded)
+      rounded = 1;
     var l1 = (p2x - p1x) / 2,
         l2 = (p3x - p2x) / 2,
         a = Math.atan((p2x - p1x) / Math.abs(p2y - p1y)),
         b = Math.atan((p3x - p2x) / Math.abs(p2y - p3y));
     a = p1y < p2y ? Math.PI - a : a;
     b = p3y < p2y ? Math.PI - b : b;
+    if (method == 2) {
+      // If added by Bago to avoid curves beyond min or max
+      if (Math.abs(a - Math.PI / 2) < Math.abs(b - Math.PI / 2))
+          b = Math.PI - a;
+      else
+         a = Math.PI - b;
+    }
+
     var alpha = Math.PI / 2 - ((a + b) % (Math.PI * 2)) / 2,
         dx1 = l1 * Math.sin(alpha + a) / 2 / rounded,
         dy1 = l1 * Math.cos(alpha + a) / 2 / rounded,
@@ -918,7 +890,6 @@ $.elycharts.common = {
       //path = this.linepathRevert(path);
       
     } else {
-      var path = [];
       //var last = false;
       for (var i = 0; i < points.length; i++) {
         var x = points[i][0], y = points[i][1];
@@ -1047,6 +1018,7 @@ $.elycharts.common = {
    *        si muovono sul proprio sistema di coordinate - la x muove lungo il raggio e la y lungo l'ortogonale)
    */
   movePath : function(env, path, offset, marginlimit, simple) {
+    var p = [], i;
     if (path.length == 1 && path[0][0] == 'RECT')
       return [ [path[0][0], this._movePathX(env, path[0][1], offset[0], marginlimit), this._movePathY(env, path[0][2], offset[1], marginlimit), this._movePathX(env, path[0][3], offset[0], marginlimit), this._movePathY(env, path[0][4], offset[1], marginlimit)] ];
     if (path.length == 1 && path[0][0] == 'SLICE') {
@@ -1065,17 +1037,15 @@ $.elycharts.common = {
     if (path.length == 1 && path[0][0] == 'TEXT')
       return [ [ path[0][0], path[0][1], path[0][2] + offset[0], path[0][3] + offset[1] ] ];
     if (path.length == 1 && path[0][0] == 'LINE') {
-      var p = [];
-      for (var i = 0; i < path[0][1].length; i++)
+      for (i = 0; i < path[0][1].length; i++)
         p.push( [ this._movePathX(env, path[0][1][i][0], offset[0], marginlimit), this._movePathY(env, path[0][1][i][1], offset[1], marginlimit) ] );
       return [ [ path[0][0], p, path[0][2] ] ];
     }
     if (path.length == 1 && path[0][0] == 'LINEAREA') {
-      var p = [];
-      for (var i = 0; i < path[0][1].length; i++)
+      for (i = 0; i < path[0][1].length; i++)
         p.push( [ this._movePathX(env, path[0][1][i][0], offset[0], marginlimit), this._movePathY(env, path[0][1][i][1], offset[1], marginlimit) ] );
       var pp = [];
-      for (var i = 0; i < path[0][2].length; i++)
+      for (i = 0; i < path[0][2].length; i++)
         pp.push( [ this._movePathX(env, path[0][2][i][0], offset[0], marginlimit), this._movePathY(env, path[0][2][i][1], offset[1], marginlimit) ] );
       return [ [ path[0][0], p, pp, path[0][3] ] ];
     }
@@ -1626,10 +1596,11 @@ $.elycharts.anchormanager = {
     
     for (var i = 0; i < env.mouseAreas.length; i++) {
       var serie = env.mouseAreas[i].piece ? env.mouseAreas[i].piece.serie : false;
+      var anc;
       if (serie)
-        var anc = env.opt.anchors[serie][env.mouseAreas[i].index];
+        anc = env.opt.anchors[serie][env.mouseAreas[i].index];
       else
-        var anc = env.opt.anchors[env.mouseAreas[i].index];
+        anc = env.opt.anchors[env.mouseAreas[i].index];
         
       if (anc && env.mouseAreas[i].props.anchor && env.mouseAreas[i].props.anchor.highlight) {
         
@@ -1668,11 +1639,12 @@ $.elycharts.anchormanager = {
       return;
 
     if (mouseAreaData.props.anchor && mouseAreaData.props.anchor.addClass) {
-      var serie = mouseAreaData.piece ? mouseAreaData.piece.serie : false;
+      //var serie = mouseAreaData.piece ? mouseAreaData.piece.serie : false;
+      var anc;
       if (serie)
-        var anc = env.opt.anchors[serie][mouseAreaData.index];
+        anc = env.opt.anchors[serie][mouseAreaData.index];
       else
-        var anc = env.opt.anchors[mouseAreaData.index];
+        anc = env.opt.anchors[mouseAreaData.index];
       if (anc) {
         $(anc).addClass(mouseAreaData.props.anchor.addClass);
         env.onAnchors.push([anc, mouseAreaData.props.anchor.addClass]);
@@ -1728,7 +1700,7 @@ $.elycharts.animationmanager = {
   _stepAnimationInt : function(env, pieces1, pieces2, section, serie, internal) {
     // Se pieces2 == null deve essere nascosto tutto pieces1
 
-    var newpieces = [];
+    var newpieces = [], newpiece;
     var j = 0;
     for (var i = 0; i < pieces1.length; i ++) {
       var animationProps = common.areaProps(env, section ? section : pieces1[i].section, serie ? serie : pieces1[i].serie);
@@ -1745,7 +1717,7 @@ $.elycharts.animationmanager = {
           pieces1[i].show = false;
           newpieces.push(pieces1[i]);
         } else {
-          var newpiece = { path : false, attr : false, show : true };
+          newpiece = { path : false, attr : false, show : true };
           newpiece.animation = {
             element : pieces1[i].element ? pieces1[i].element : false,
             speed : animationProps && animationProps.speed ? animationProps.speed : 300,
@@ -1757,7 +1729,7 @@ $.elycharts.animationmanager = {
       }
       // Bisogna gestire la transizione dal vecchio piece al nuovo
       else {
-        var newpiece = pieces2 ? pieces2[j] : { path : false, attr : false };
+        newpiece = pieces2 ? pieces2[j] : { path : false, attr : false };
         newpiece.show = true;
         if (typeof pieces1[i].paths == 'undefined') {
           // Piece a singolo path
@@ -1842,22 +1814,23 @@ $.elycharts.animationmanager = {
   
   animationGrow : function(env, props, piece) {
     this._animationPiece(piece, props, piece.subSection);
+    var i, npath, y;
     
     switch (env.opt.type) {
       case 'line':
-        var y = env.opt.height - env.opt.margins[2];
+        y = env.opt.height - env.opt.margins[2];
         switch (piece.subSection) {
           case 'Plot':
             if (!piece.paths) {
                 //for (var i = 0; i < piece.path.length; i++)
                 //  piece.animation.startPath.push([i == 0 ? "M" : "L", piece.path[i][piece.path[i].length - 2], y]);
-                var npath = [ 'LINE', [], piece.path[0][2]];
-                for (var i = 0; i < piece.path[0][1].length; i++)
+                npath = [ 'LINE', [], piece.path[0][2]];
+                for (i = 0; i < piece.path[0][1].length; i++)
                   npath[1].push([ piece.path[0][1][i][0], y ]);
                 piece.animation.startPath.push(npath);
 
             } else {
-              for (var i = 0; i < piece.paths.length; i++)
+              for (i = 0; i < piece.paths.length; i++)
                 if (piece.paths[i].path)
                   piece.paths[i].animation.startPath.push([ 'RECT', piece.paths[i].path[0][1], y, piece.paths[i].path[0][3], y ]);
             }
@@ -1874,8 +1847,8 @@ $.elycharts.animationmanager = {
                   piece.animation.startPath.push([ 'L', common.getX(piece.path[i]), y ]); break;
               }
             */
-            var npath = [ 'LINEAREA', [], [], piece.path[0][3]];
-            for (var i = 0; i < piece.path[0][1].length; i++) {
+            npath = [ 'LINEAREA', [], [], piece.path[0][3]];
+            for (i = 0; i < piece.path[0][1].length; i++) {
               npath[1].push([ piece.path[0][1][i][0], y ]);
               npath[2].push([ piece.path[0][2][i][0], y ]);
             }
@@ -1883,7 +1856,7 @@ $.elycharts.animationmanager = {
             
             break;
           case 'Dot':
-            for (var i = 0; i < piece.paths.length; i++)
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path)
                 piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], y, piece.paths[i].path[0][3]]);
             break;
@@ -1892,7 +1865,7 @@ $.elycharts.animationmanager = {
         
       case 'pie':
         if (piece.subSection == 'Plot')
-          for (var i = 0; i < piece.paths.length; i++)
+          for (i = 0; i < piece.paths.length; i++)
             if (piece.paths[i].path)
               piece.paths[i].animation.startPath.push([ 'SLICE', piece.paths[i].path[0][1], piece.paths[i].path[0][2], piece.paths[i].path[0][4] + piece.paths[i].path[0][3] * 0.1, piece.paths[i].path[0][4], piece.paths[i].path[0][5], piece.paths[i].path[0][6] ]);
             
@@ -1903,17 +1876,18 @@ $.elycharts.animationmanager = {
         break;
 
       case 'barline':
+        var x;
         if (piece.section == 'Series' && piece.subSection == 'Plot') {
           if (!props.subType)
-            var x = env.opt.direction != 'rtl' ? env.opt.margins[3] : env.opt.width - env.opt.margins[1];
+            x = env.opt.direction != 'rtl' ? env.opt.margins[3] : env.opt.width - env.opt.margins[1];
           else if (props.subType == 1)
-            var x = env.opt.direction != 'rtl' ? env.opt.width - env.opt.margins[1] : env.opt.margins[3];
-          for (var i = 0; i < piece.paths.length; i++)
+            x = env.opt.direction != 'rtl' ? env.opt.width - env.opt.margins[1] : env.opt.margins[3];
+          for (i = 0; i < piece.paths.length; i++)
             if (piece.paths[i].path) {
               if (!props.subType || props.subType == 1)
                 piece.paths[i].animation.startPath.push([ 'RECT', x, piece.paths[i].path[0][2], x, piece.paths[i].path[0][4], piece.paths[i].path[0][5] ]);
               else {
-                var y = (piece.paths[i].path[0][2] + piece.paths[i].path[0][4]) / 2;
+                y = (piece.paths[i].path[0][2] + piece.paths[i].path[0][4]) / 2;
                 piece.paths[i].animation.startPath.push([ 'RECT', piece.paths[i].path[0][1], y, piece.paths[i].path[0][3], y, piece.paths[i].path[0][5] ]);
               }
             }
@@ -1924,11 +1898,11 @@ $.elycharts.animationmanager = {
   },
 
   _animationAvgXYArray : function(arr) {
-    var res = [], avg = 0;
-    for (var i = 0; i < arr.length; i++)
+    var res = [], avg = 0, i;
+    for (i = 0; i < arr.length; i++)
       avg += arr[i][1];
     avg = avg / arr.length;
-    for (var i = 0; i < arr.length; i++)
+    for (i = 0; i < arr.length; i++)
       res.push([ arr[i][0], avg ]);
     return res;
   },
@@ -1936,7 +1910,7 @@ $.elycharts.animationmanager = {
   animationAvg : function(env, props, piece) {
     this._animationPiece(piece, props, piece.subSection);
     
-    var avg = 0;
+    var avg = 0, i, l;
     switch (env.opt.type) {
       case 'line':
         switch (piece.subSection) {
@@ -1954,14 +1928,14 @@ $.elycharts.animationmanager = {
 
             } else {
               // BAR
-              var l = 0;
-              for (var i = 0; i < piece.paths.length; i++)
+              l = 0;
+              for (i = 0; i < piece.paths.length; i++)
                 if (piece.paths[i].path) {
                   l ++;
                   avg += piece.paths[i].path[0][2];
                 }
               avg = avg / l;
-              for (var i = 0; i < piece.paths.length; i++)
+              for (i = 0; i < piece.paths.length; i++)
                 if (piece.paths[i].path)
                   piece.paths[i].animation.startPath.push([ "RECT", piece.paths[i].path[0][1], avg, piece.paths[i].path[0][3], piece.paths[i].path[0][4] ]);
             }
@@ -1986,14 +1960,14 @@ $.elycharts.animationmanager = {
             break;
 
           case 'Dot':
-            var l = 0;
-            for (var i = 0; i < piece.paths.length; i++)
+            l = 0;
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path) {
                 l ++;
                 avg += piece.paths[i].path[0][2];
               }
             avg = avg / l;
-            for (var i = 0; i < piece.paths.length; i++)
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path)
                 piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], avg, piece.paths[i].path[0][3]]);
             break;
@@ -2004,7 +1978,7 @@ $.elycharts.animationmanager = {
         var delta = 360 / piece.paths.length;
       
         if (piece.subSection == 'Plot')
-          for (var i = 0; i < piece.paths.length; i++)
+          for (i = 0; i < piece.paths.length; i++)
             if (piece.paths[i].path)
               piece.paths[i].animation.startPath.push([ 'SLICE', piece.paths[i].path[0][1], piece.paths[i].path[0][2], piece.paths[i].path[0][3], piece.paths[i].path[0][4], i * delta, (i + 1) * delta ]);
         
@@ -2034,6 +2008,8 @@ $.elycharts.animationmanager = {
 
   animationReg : function(env, props, piece) {
     this._animationPiece(piece, props, piece.subSection);
+    var i, c, y1, y2;
+    
     switch (env.opt.type) {
       case 'line':
         switch (piece.subSection) {
@@ -2052,13 +2028,15 @@ $.elycharts.animationmanager = {
               
             } else {
               // BAR
-              var c = piece.paths.length;
-              var y1 = common.getY(piece.paths[0].path[0]);
-              var y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
-              
-              for (var i = 0; i < piece.paths.length; i++)
-                if (piece.paths[i].path)
-                  piece.paths[i].animation.startPath.push([ "RECT", piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3], piece.paths[i].path[0][4] ]);
+              c = piece.paths.length;
+              if (c > 1) {
+                y1 = common.getY(piece.paths[0].path[0]);
+                y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
+
+                for (i = 0; i < piece.paths.length; i++)
+                  if (piece.paths[i].path)
+                    piece.paths[i].animation.startPath.push([ "RECT", piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3], piece.paths[i].path[0][4] ]);
+              }
             }
             break;
 
@@ -2079,11 +2057,11 @@ $.elycharts.animationmanager = {
             break;
 
           case 'Dot':
-            var c = piece.paths.length;
-            var y1 = common.getY(piece.paths[0].path[0]);
-            var y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
+            c = piece.paths.length;
+            y1 = common.getY(piece.paths[0].path[0]);
+            y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
             
-            for (var i = 0; i < piece.paths.length; i++)
+            for (i = 0; i < piece.paths.length; i++)
               if (piece.paths[i].path)
                 piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3]]);
             break;
@@ -2224,6 +2202,7 @@ $.elycharts.highlightmanager = {
   },
   
   onMouseOver : function(env, serie, index, mouseAreaData) {
+    var path, element;
     // TODO Se non e' attivo l'overlay (per la serie o per tutto) e' inutile fare il resto
     
     // Cerco i piece da evidenziare (tutti quelli che sono costituiti da path multipli)
@@ -2234,10 +2213,11 @@ $.elycharts.highlightmanager = {
         && (!serie || mouseAreaData.pieces[i].serie == serie) 
         && mouseAreaData.pieces[i].paths[index] && mouseAreaData.pieces[i].paths[index].element) {
         var piece = mouseAreaData.pieces[i].paths[index];
-        var element = piece.element;
-        var path = piece.path;
+        element = piece.element;
+        path = piece.path;
         var attr = common.getElementOriginalAttrs(element);
         var props = serie ? mouseAreaData.props : common.areaProps(env, mouseAreaData.pieces[i].section, mouseAreaData.pieces[i].serie);
+        var pelement, ppiece, ppath;
         if (path && props.highlight) {
           if (props.highlight.scale) {
             if (path[0][0] == 'RECT') {
@@ -2265,54 +2245,54 @@ $.elycharts.highlightmanager = {
                 common.movePath(env, [ path[2]], [+dx, +dy])[0],
                 common.movePath(env, [ path[3]], [-dx, +dy])[0],
                 path[4] ];
-              common.animationStackPush(env, piece, element, common.getSVGProps(common.preparePathShow(env, path)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
+              common.animationStackPush(env, piece, element, common.getSVGProps(common.preparePathShow(env, path)), props.highlight.scaleSpeed, props.highlight.scaleEasing, 0, true);
               
               // Se c'e' un piece precedente lo usa, altrimenti cerca un topSector per la riduzione
-              var pelement = false;
+              pelement = false;
               if (index > 0) {
-                var ppiece = mouseAreaData.pieces[i].paths[index - 1];
-                var pelement = ppiece.element;
-                var ppath = ppiece.path;
+                ppiece = mouseAreaData.pieces[i].paths[index - 1];
+                pelement = ppiece.element;
+                ppath = ppiece.path;
               } else {
-                var ppiece = common.findInPieces(mouseAreaData.pieces, 'Sector', 'top');
+                ppiece = common.findInPieces(mouseAreaData.pieces, 'Sector', 'top');
                 if (ppiece) {
-                  var pelement = ppiece.element;
-                  var ppath = ppiece.path;
+                  pelement = ppiece.element;
+                  ppath = ppiece.path;
                 }
               }
               if (pelement) {
-                var pattr = common.getElementOriginalAttrs(pelement);
-                var ppath = [
+                //pattr = common.getElementOriginalAttrs(pelement);
+                ppath = [
                   ppath[0], ppath[1],
                   common.movePath(env, [ ppath[2]], [+dx, -dy])[0],
                   common.movePath(env, [ ppath[3]], [-dx, -dy])[0],
                   ppath[4] ];
-                common.animationStackPush(env, ppiece, pelement, common.getSVGProps(common.preparePathShow(env, ppath)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
-                env.highlighted.push({ piece : ppiece, cfg : props.highlight });
+                common.animationStackPush(env, ppiece, pelement, common.getSVGProps(common.preparePathShow(env, ppath)), props.highlight.scaleSpeed, props.highlight.scaleEasing, 0, true);
+                env.highlighted.push({piece : ppiece, cfg : props.highlight});
               }
               
               // Se c'e' un piece successivo lo usa, altrimenti cerca un bottomSector per la riduzione
-              var pelement = false;
+              pelement = false;
               if (index < mouseAreaData.pieces[i].paths.length - 1) {
-                var ppiece = mouseAreaData.pieces[i].paths[index + 1];
-                var pelement = ppiece.element;
-                var ppath = ppiece.path;
+                ppiece = mouseAreaData.pieces[i].paths[index + 1];
+                pelement = ppiece.element;
+                ppath = ppiece.path;
               } else {
-                var ppiece = common.findInPieces(mouseAreaData.pieces, 'Sector', 'bottom');
+                ppiece = common.findInPieces(mouseAreaData.pieces, 'Sector', 'bottom');
                 if (ppiece) {
-                  var pelement = ppiece.element;
-                  var ppath = ppiece.path;
+                  pelement = ppiece.element;
+                  ppath = ppiece.path;
                 }
               }
               if (pelement) {
-                var pattr = common.getElementOriginalAttrs(pelement);
-                var ppath = [
+                //var pattr = common.getElementOriginalAttrs(pelement);
+                ppath = [
                   common.movePath(env, [ ppath[0]], [-dx, +dy])[0],
                   common.movePath(env, [ ppath[1]], [+dx, +dy])[0],
                   ppath[2], ppath[3],
                   ppath[4] ];
-                common.animationStackPush(env, ppiece, pelement, common.getSVGProps(common.preparePathShow(env, ppath)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
-                env.highlighted.push({ piece : ppiece, cfg : props.highlight});
+                common.animationStackPush(env, ppiece, pelement, common.getSVGProps(common.preparePathShow(env, ppath)), props.highlight.scaleSpeed, props.highlight.scaleEasing, 0, true);
+                env.highlighted.push({piece : ppiece, cfg : props.highlight});
               }
               
               common.animationStackEnd(env);
@@ -2335,7 +2315,7 @@ $.elycharts.highlightmanager = {
           }
           
           //env.highlighted.push({element : element, attr : attr});
-          env.highlighted.push({ piece : piece, cfg : props.highlight });
+          env.highlighted.push({piece : piece, cfg : props.highlight});
           
           if (props.highlight.overlayProps) {
             //BIND: mouseAreaData.listenerDisabled = true;
@@ -2345,7 +2325,7 @@ $.elycharts.highlightmanager = {
             // in loop. TODO Rivedere e sistemare anche per tooltip
             //BIND: setTimeout(function() { mouseAreaData.listenerDisabled = false; }, 10);
             attr = false;
-            env.highlighted.push({ element : element, attr : attr, cfg : props.highlight });
+            env.highlighted.push({element : element, attr : attr, cfg : props.highlight});
           }
         }
       }
@@ -2357,7 +2337,7 @@ $.elycharts.highlightmanager = {
       
       switch (env.opt.features.highlight.indexHighlight) {
         case 'bar':
-          var path = [ ['RECT', env.opt.margins[3] + index * delta1, env.opt.margins[0] ,
+          path = [ ['RECT', env.opt.margins[3] + index * delta1, env.opt.margins[0] ,
             env.opt.margins[3] + (index + 1) * delta1, env.opt.height - env.opt.margins[2] ] ];
           break;
         
@@ -2365,11 +2345,11 @@ $.elycharts.highlightmanager = {
           lineCenter = false;
         case 'barline':
           var x = Math.round((lineCenter ? delta1 / 2 : 0) + env.opt.margins[3] + index * (lineCenter ? delta1 : delta2));
-          var path = [[ 'M', x, env.opt.margins[0]], ['L', x, env.opt.height - env.opt.margins[2]]];
+          path = [[ 'M', x, env.opt.margins[0]], ['L', x, env.opt.height - env.opt.margins[2]]];
       }
       if (path) {
         //BIND: mouseAreaData.listenerDisabled = true;
-        var element = common.showPath(env, path).attr(env.opt.features.highlight.indexHighlightProps);
+        element = common.showPath(env, path).attr(env.opt.features.highlight.indexHighlightProps);
         //BIND: $(element.node).unbind().mouseover(mouseAreaData.mouseover).mouseout(mouseAreaData.mouseout);
         //BIND: setTimeout(function() { mouseAreaData.listenerDisabled = false; }, 10);
         env.highlighted.push({element : element, attr : false, cfg : env.opt.features.highlight});
@@ -3108,8 +3088,8 @@ $.elycharts.barline = {
       maxvalue = 1;
       
     var pieces = [];
-    for (var serie in opt.values) {
-      var plot = env.plots[serie];
+    for (serie in opt.values) {
+      plot = env.plots[serie];
       var d = (env.xmax - env.xmin) / maxvalue;
       if (opt.direction != 'rtl')
         pieces.push({
@@ -3181,7 +3161,7 @@ $.elycharts.funnel = {
     var h = hstart; // Starting height
     var hslices = (hend - hstart - opt.topSector - opt.bottomSector) / (values.length > 1 ? values.length - 1 : 1);
     var w = wratio; // Starting width
-    if (path = this.edge(env, h, w, true))
+    if ((path = this.edge(env, h, w, true)))
       pieces.push({path : path, section: 'Edge', attr : env.opt.edgeProps});
     if (opt.topSector > 0 && (path = this.section(env, h, h = h + opt.topSector, w, w)))
       pieces.push({path : path.path, center: path.center, rect: path.rect, section: 'Sector', serie: 'top', attr : env.opt.topSectorProps});
@@ -3191,8 +3171,8 @@ $.elycharts.funnel = {
       // METODO "cutarea"
       // area taglio attuale / area taglio iniziale = valore attuale / valore iniziare
       // => larghezza attuale = sqrt(values[i] / values[0] * pow(larghezza iniziale / 2, 2)) * 2
-      if (path = this.section(env, h, h = h + hslices, w, 
-        opt.method == 'width' ? w = v / v0 * wratio : w = Math.sqrt(v / v0 * Math.pow(wratio / 2, 2)) * 2))
+      if ((path = this.section(env, h, h = h + hslices, w,
+        opt.method == 'width' ? w = v / v0 * wratio : w = Math.sqrt(v / v0 * Math.pow(wratio / 2, 2)) * 2)))
       var props = common.areaProps(env, 'Series', serie, i - 1);
       paths.push({path : path.path, center: path.center, rect: path.rect, attr : props.plotProps});
     }
@@ -3200,7 +3180,7 @@ $.elycharts.funnel = {
     
     if (opt.bottomSector > 0 && (path = this.section(env, h, h = h + opt.bottomSector, w, w)))
       pieces.push({path : path.path, center: path.center, rect: path.rect, section: 'Sector', serie: 'bottom', attr : env.opt.bottomSectorProps});
-    if (path = this.edge(env, h, w, false))
+    if ((path = this.edge(env, h, w, false)))
       pieces.push({path : path, section : 'Edge', attr : env.opt.edgeProps});
 
     return pieces;
@@ -3286,20 +3266,21 @@ $.elycharts.line = {
     
     var values = env.opt.values;
     var labels = env.opt.labels;
+    var i, cum, props, serie, plot;
     
     // Valorizzazione di tutte le opzioni utili e le impostazioni interne di ogni grafico e dell'ambiente di lavoro
     if (common.executeIfChanged(env, ['values', 'series'])) {
       var idx = 0;
       var prevVisibleSerie = false;
-      for (var serie in values) {
-        var plot = {
+      for (serie in values) {
+        plot = {
           index : idx,
           type : false,
           visible : false
         };
         plots[serie] = plot;
         if (values[serie]) {
-          var props = common.areaProps(env, 'Series', serie);
+          props = common.areaProps(env, 'Series', serie);
           plot.type = props.type;
           
           if (props.visible) {
@@ -3317,11 +3298,11 @@ $.elycharts.line = {
                 plot.to = values[serie];
               else {
                 plot.to = [];
-                var cum = 0;
-                for (var i = 0; i < values[serie].length; i++)
+                cum = 0;
+                for (i = 0; i < values[serie].length; i++)
                   plot.to.push(cum += values[serie][i]);
               }
-              for (var i = 0; i < values[serie].length; i++)
+              for (i = 0; i < values[serie].length; i++)
                 plot.from.push(0);
 
             } else {
@@ -3330,12 +3311,12 @@ $.elycharts.line = {
                 plot.barno = plots[props.stacked].barno;
               plot.from = plots[props.stacked].stack;
               plot.to = [];
-              var cum = 0;
+              cum = 0;
               if (!props.cumulative)
-                for (var i = 0; i < values[serie].length; i++)
+                for (i = 0; i < values[serie].length; i++)
                   plot.to.push(plot.from[i] + values[serie][i]);
               else
-                for (var i = 0; i < values[serie].length; i++)
+                for (i = 0; i < values[serie].length; i++)
                   plot.to.push(plot.from[i] + (cum += values[serie][i]));
               plots[props.stacked].stack = plot.to;
             }
@@ -3343,8 +3324,6 @@ $.elycharts.line = {
             plot.stack = plot.to;
             plot.max = Math.max.apply(Math, plot.from.concat(plot.to));
             plot.min = Math.min.apply(Math, plot.from.concat(plot.to));
-            if (plot.min == plot.max)
-              plot.max = plot.min + 1;
             
             // Assi (DEP: values, series)
             if (props.axis) {
@@ -3370,43 +3349,30 @@ $.elycharts.line = {
     // Preparazione scala assi (values, series, axis)
     if (common.executeIfChanged(env, ['values', 'series', 'axis'])) {
       for (var lidx in axis) {
-        var props = common.areaProps(env, 'Axis', lidx);
+        props = common.areaProps(env, 'Axis', lidx);
         axis[lidx].props = props;
         
         if (typeof props.max != 'undefined')
           axis[lidx].max = props.max;
         if (typeof props.min != 'undefined')
           axis[lidx].min = props.min;
-        /*if (props.normalize) {
-          if (props.normalize == 'auto' || props.normalize == 'autony') {
-            var v = Math.abs(axis[lidx].max);
-            if (axis[lidx].min && Math.abs(axis[lidx].min) > v)
-              v = Math.abs(axis[lidx].min);
-            if (v) {
-              var basev = Math.pow(10,Math.floor(Math.log(v)/Math.LN10));
-              v = Math.ceil(v / basev) * basev;
-              if (props.normalize == 'autony') // Si basa sulla feature: grid
-                v = Math.ceil(v / opt.features.grid.ny) * opt.features.grid.ny;
-              props.normalize = v;
-            } else
-              props.normalize = false;
-          }
-          if (props.normalize) {
-            if (axis[lidx].max)
-              axis[lidx].max = Math.ceil(axis[lidx].max / props.normalize) * props.normalize;
-            if (axis[lidx].min)
-              axis[lidx].min = Math.floor(axis[lidx].min / props.normalize) * props.normalize;
-          }
-        }*/
+
+        if (axis[lidx].min == axis[lidx].max)
+          axis[lidx].max = axis[lidx].min + 1;
+
         if (props.normalize && props.normalize > 0) {
           var v = Math.abs(axis[lidx].max);
           if (axis[lidx].min && Math.abs(axis[lidx].min) > v)
             v = Math.abs(axis[lidx].min);
           if (v) {
             var basev = Math.floor(Math.log(v)/Math.LN10) - (props.normalize - 1);
-            // NOTA: Su firefox Math.pow(10, -X) inserisce delle cifre poco significative "rumorose", meglio fare 1/Math.pow(10,X)
+            // NOTE: On firefx Math.pow(10, -X) sometimes results in number noise (0.89999...), it's better to do 1/Math.pow(10,X)
             basev = basev >= 0 ? Math.pow(10, basev) : 1 / Math.pow(10, -basev);
             v = Math.ceil(v / basev / (opt.features.grid.ny ? opt.features.grid.ny : 1)) * basev * (opt.features.grid.ny ? opt.features.grid.ny : 1);
+            // Calculation above, with decimal number sometimes insert some noise in numbers (eg: 8.899999... instead of 0.9), so i need to round result with proper precision
+            v = Math.round(v / basev) * basev;
+            // I need to store the normalization base for further roundin (eg: in axis label, sometimes calculation results in "number noise", so i need to round them with proper precision)
+            axis[lidx].normalizationBase = basev;
             if (axis[lidx].max)
               axis[lidx].max = Math.ceil(axis[lidx].max / v) * v;
             if (axis[lidx].min)
@@ -3429,10 +3395,10 @@ $.elycharts.line = {
     var deltaX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 1 ? labels.length - 1 : 1);
     var deltaBarX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 0 ? labels.length : 1);
 
-    for (var serie in values) {
+    for (serie in values) {
       var data = values[serie];
-      var props = common.areaProps(env, 'Series', serie);
-      var plot = plots[serie];
+      props = common.areaProps(env, 'Series', serie);
+      plot = plots[serie];
       
       if (values[serie] && props.visible) {
         var deltaY = (opt.height - opt.margins[2] - opt.margins[0]) / (plot.max - plot.min);
@@ -3443,7 +3409,7 @@ $.elycharts.line = {
           var fillPath = [ 'LINEAREA', [], [], props.rounded ];
           var dotPieces = [];
           
-          for (var i = 0, ii = labels.length; i < ii; i++) {
+          for (i = 0, ii = labels.length; i < ii; i++) {
             var indexProps = common.areaProps(env, 'Series', serie, i);
             
             var d = plot.to[i] > plot.max ? plot.max : (plot.to[i] < plot.min ? plot.min : plot.to[i]);
@@ -3478,7 +3444,7 @@ $.elycharts.line = {
           pieceBar = [];
           
           // BAR CHART
-          for (var i = 0, ii = labels.length; i < ii; i++) {
+          for (i = 0, ii = labels.length; i < ii; i++) {
             if (plot.from[i] != plot.to[i]) {
               var bwid = Math.floor((deltaBarX - opt.barMargins) / env.barno);
               var bpad = bwid * (100 - props.barWidthPerc) / 200;
@@ -3487,7 +3453,7 @@ $.elycharts.line = {
               var x1 = Math.floor(opt.margins[3] + i * deltaBarX + boff + bpad);
               var y1 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.to[i] - plot.min));
               var y2 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.from[i] - plot.min));
-              
+
               pieceBar.push({path : [ [ 'RECT', x1, y1, x1 + bwid - bpad * 2, y2 ] ], attr : props.plotProps });
             }
           }
@@ -3521,24 +3487,24 @@ $.elycharts.line = {
       var paper = env.paper;
       var axis = env.axis;
       var labels = env.opt.labels;
-      var axis = env.axis;
       var deltaX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 1 ? labels.length - 1 : 1);
       var deltaBarX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 0 ? labels.length : 1);
-      
+      var i, j, x, y, lw, labx, laby, labe, val, txt;
       // Label asse X
       var paths = [];
+
       if (axis.x && axis.x.props.labels)
-        for (var i = 0; i < labels.length; i++)
+        for (i = 0; i < labels.length; i++)
           if (axis.x.props.labelsSkip && i < axis.x.props.labelsSkip)
             labels[i] = false;
           else if (typeof labels[i] != 'boolean' || labels[i]) {
-            var val = labels[i];
+            val = labels[i];
             if (axis.x.props.labelsFormatHandler)
               val = axis.x.props.labelsFormatHandler(val);
-            var txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
-            var labx = (opt.labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (opt.labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
-            var laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
-            var labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
+            txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
+            labx = (opt.labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (opt.labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
+            laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
+            labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
             if (axis.x.props.labelsRotate)
               // Rotazione label
               labe.attr({"text-anchor" : axis.x.props.labelsRotate > 0 ? "start" : "end"}).rotate(axis.x.props.labelsRotate, labx, laby).toBack();
@@ -3553,17 +3519,17 @@ $.elycharts.line = {
             } else if (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start") {
               // Label non ruotate ma con labelsAnchor
               labe.attr({"text-anchor" : "start"});
-              var lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (opt.labelsCenter ? deltaBarX : deltaX);
+              lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (opt.labelsCenter ? deltaBarX : deltaX);
               if (axis.x.props.labelsHideCovered && lw > 0) {
-                var j = i + Math.ceil(lw / (opt.labelsCenter ? deltaBarX : deltaX));
+                j = i + Math.ceil(lw / (opt.labelsCenter ? deltaBarX : deltaX));
                 for (; i < j && i + 1 < labels.length; i++)
                   labels[i + 1] = false;
               }
             } else if (axis.x.props.labelsHideCovered) {
               // Gestisco caso labelsHideCovered con labelsAnchor != 'start'
-              var lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (opt.labelsCenter ? deltaBarX : deltaX);
+              lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (opt.labelsCenter ? deltaBarX : deltaX);
               if (lw > 0) {
-                var j = i + Math.ceil(lw / (opt.labelsCenter ? deltaBarX : deltaX));
+                j = i + Math.ceil(lw / (opt.labelsCenter ? deltaBarX : deltaX));
                 for (; i < j && i + 1 < labels.length; i++)
                   labels[i + 1] = false;
               }
@@ -3574,57 +3540,63 @@ $.elycharts.line = {
           
       // Titolo Asse X
       if (axis.x && axis.x.props.title) {
-        var x = opt.margins[3] + Math.floor((opt.width - opt.margins[1] - opt.margins[3]) / 2);
-        var y = opt.height - opt.margins[2] + axis.x.props.titleDistance * ($.browser.msie ? axis.x.props.titleDistanceIE : 1);
+        x = opt.margins[3] + Math.floor((opt.width - opt.margins[1] - opt.margins[3]) / 2);
+        y = opt.height - opt.margins[2] + axis.x.props.titleDistance * ($.browser.msie ? axis.x.props.titleDistanceIE : 1);
         //paper.text(x, y, axis.x.props.title).attr(axis.x.props.titleProps);
         pieces.push({ section : 'Axis', serie : 'x', subSection : 'Title', path : [ [ 'TEXT', axis.x.props.title, x, y ] ], attr : axis.x.props.titleProps });
-      }
+      } else
+        pieces.push({ section : 'Axis', serie : 'x', subSection : 'Title', path : false, attr : false });
 
       // Label + Titolo Assi L/R
       for (var jj in ['l', 'r']) {
-        var j = ['l', 'r'][jj];
+        j = ['l', 'r'][jj];
         if (axis[j] && axis[j].props.labels) {
-          var paths = [];
-          for (var i = axis[j].props.labelsSkip ? axis[j].props.labelsSkip : 0; i <= props.ny; i++) {
+          paths = [];
+          for (i = axis[j].props.labelsSkip ? axis[j].props.labelsSkip : 0; i <= props.ny; i++) {
             var deltaY = (opt.height - opt.margins[2] - opt.margins[0]) / props.ny;
             if (j == 'r') {
-              var labx = opt.width - opt.margins[1] + axis[j].props.labelsDistance;
+              labx = opt.width - opt.margins[1] + axis[j].props.labelsDistance;
               if (!axis[j].props.labelsProps["text-anchor"])
                 axis[j].props.labelsProps["text-anchor"] = "start";
             } else {
-              var labx = opt.margins[3] - axis[j].props.labelsDistance;
+              labx = opt.margins[3] - axis[j].props.labelsDistance;
               if (!axis[j].props.labelsProps["text-anchor"])
                 axis[j].props.labelsProps["text-anchor"] = "end";
             }
             if (axis[j].props.labelsAnchor)
               axis[j].props.labelsProps["text-anchor"] = axis[j].props.labelsAnchor;
-            // NOTA: Le parentesi attorno alla divisione sono importanti per mantenere le cifre significative
-            var val = (axis[j].min + (i * ((axis[j].max - axis[j].min) / props.ny)));
+            // NOTE: Parenthesis () around division are useful to keep right number precision
+            val = (axis[j].min + (i * ((axis[j].max - axis[j].min) / props.ny)));
+            // Rounding with proper precision for "number sharpening"
+            if (axis[j].normalizationBase)
+              val = Math.round(val / axis[j].normalizationBase) * axis[j].normalizationBase;
+
             if (axis[j].props.labelsFormatHandler)
               val = axis[j].props.labelsFormatHandler(val);
             if (axis[j].props.labelsCompactUnits)
               val = common.compactUnits(val, axis[j].props.labelsCompactUnits);
-            var txt = (axis[j].props.prefix ? axis[j].props.prefix : "") + val + (axis[j].props.suffix ? axis[j].props.suffix : "");
-            var laby = opt.height - opt.margins[2] - i * deltaY;
+            txt = (axis[j].props.prefix ? axis[j].props.prefix : "") + val + (axis[j].props.suffix ? axis[j].props.suffix : "");
+            laby = opt.height - opt.margins[2] - i * deltaY;
             //var labe = paper.text(labx, laby + (axis[j].props.labelsMargin ? axis[j].props.labelsMargin : 0), txt).attr(axis[j].props.labelsProps).toBack();
             paths.push( { path : [ [ 'TEXT', txt, labx, laby + (axis[j].props.labelsMargin ? axis[j].props.labelsMargin : 0) ] ], attr : axis[j].props.labelsProps });
           }
           pieces.push({ section : 'Axis', serie : j, subSection : 'Label', paths : paths });
-        }
+        } else
+          pieces.push({ section : 'Axis', serie : j, subSection : 'Label', paths : [] });
         if (axis[j] && axis[j].props.title) {
           if (j == 'r')
-            var x = opt.width - opt.margins[1] + axis[j].props.titleDistance * ($.browser.msie ? axis[j].props.titleDistanceIE : 1);
+            x = opt.width - opt.margins[1] + axis[j].props.titleDistance * ($.browser.msie ? axis[j].props.titleDistanceIE : 1);
           else
-            var x = opt.margins[3] - axis[j].props.titleDistance * ($.browser.msie ? axis[j].props.titleDistanceIE : 1);
+            x = opt.margins[3] - axis[j].props.titleDistance * ($.browser.msie ? axis[j].props.titleDistanceIE : 1);
           //paper.text(x, opt.margins[0] + Math.floor((opt.height - opt.margins[0] - opt.margins[2]) / 2), axis[j].props.title).attr(axis[j].props.titleProps).attr({rotation : j == 'l' ? 270 : 90});
           var attr = common._clone(axis[j].props.titleProps);
           attr.rotation = j == 'l' ? 270 : 90
           pieces.push({ section : 'Axis', serie : j, subSection : 'Title', path : [ [ 'TEXT', axis[j].props.title, x, opt.margins[0] + Math.floor((opt.height - opt.margins[0] - opt.margins[2]) / 2) ] ], attr : attr });
-        }
+        } else
+          pieces.push({ section : 'Axis', serie : j, subSection : 'Title', path : false, attr : false });
       }
       
       // Grid
-      var gridElement = false;
       if (props.nx || props.ny) {
         var path = [], t,
           nx = props.nx == 'auto' ? (opt.labelsCenter ? labels.length : labels.length - 1) : props.nx,
@@ -3639,13 +3611,13 @@ $.elycharts.line = {
           drawV = typeof props.draw == 'object' ? props.draw[1] : props.draw;
 
         if (ny > 0)
-          for (var i = 0; i < ny + 1; i++)
+          for (i = 0; i < ny + 1; i++)
             if (i == 0 && forceBorderY1 || i == ny && forceBorderY2 || i > 0 && i < ny && drawH) {
               path.push(["M", opt.margins[3] - props.extra[3], opt.margins[0] + Math.round(i * rowHeight) ]);
               path.push(["L", opt.width - opt.margins[1] + props.extra[1], opt.margins[0] + Math.round(i * rowHeight)]);
             }
 
-        for (var i = 0; i < nx + 1; i++) {
+        for (i = 0; i < nx + 1; i++) {
           if ((t = drawV && (props.nx != 'auto' || typeof labels[i] != 'boolean' || labels[i])) || (forceBorderX1 && i == 0) || (forceBorderX2 && i == nx)) {
             path.push(["M", opt.margins[3] + Math.round(i * columnWidth), opt.margins[0] - props.extra[0] ]); //(t ? props.extra[0] : 0)]);
             path.push(["L", opt.margins[3] + Math.round(i * columnWidth), opt.height - opt.margins[2] + props.extra[2] ]); //(t ? props.extra[2] : 0)]);
@@ -3658,7 +3630,7 @@ $.elycharts.line = {
         
         // Ticks asse X
         if (props.ticks.active && (typeof props.ticks.active != 'object' || props.ticks.active[0])) {
-          for (var i = 0; i < nx + 1; i++) {
+          for (i = 0; i < nx + 1; i++) {
             if (props.nx != 'auto' || typeof labels[i] != 'boolean' || labels[i]) {
               tpath.push(["M", opt.margins[3] + Math.round(i * columnWidth), opt.height - opt.margins[2] - props.ticks.size[1] ]);
               tpath.push(["L", opt.margins[3] + Math.round(i * columnWidth), opt.height - opt.margins[2] + props.ticks.size[0] ]);
@@ -3667,13 +3639,13 @@ $.elycharts.line = {
         }
         // Ticks asse L
         if (props.ticks.active && (typeof props.ticks.active != 'object' || props.ticks.active[1]))
-          for (var i = 0; i < ny + 1; i++) {
+          for (i = 0; i < ny + 1; i++) {
             tpath.push(["M", opt.margins[3] - props.ticks.size[0], opt.margins[0] + Math.round(i * rowHeight) ]);
             tpath.push(["L", opt.margins[3] + props.ticks.size[1], opt.margins[0] + Math.round(i * rowHeight)]);
           }
         // Ticks asse R
         if (props.ticks.active && (typeof props.ticks.active != 'object' || props.ticks.active[2]))
-          for (var i = 0; i < ny + 1; i++) {
+          for (i = 0; i < ny + 1; i++) {
             tpath.push(["M", opt.width - opt.margins[1] - props.ticks.size[1], opt.margins[0] + Math.round(i * rowHeight) ]);
             tpath.push(["L", opt.width - opt.margins[1] + props.ticks.size[0], opt.margins[0] + Math.round(i * rowHeight)]);
           }
@@ -3712,9 +3684,9 @@ $.elycharts.pie = {
  		var cx = env.opt.cx ? env.opt.cx : Math.floor(w / 2);
 		var cy = env.opt.cy ? env.opt.cx : Math.floor(h / 2);
     
-    var cnt = 0;
-    for (var serie in opt.values) {
-      var plot = {
+    var cnt = 0, i, ii, serie, plot, props;
+    for (serie in opt.values) {
+      plot = {
         visible : false,
         total : 0,
         values : []
@@ -3725,13 +3697,13 @@ $.elycharts.pie = {
         plot.visible = true;
         cnt ++;
         plot.values = opt.values[serie];
-        for (var i = 0, ii = plot.values.length; i < ii; i++)
+        for (i = 0, ii = plot.values.length; i < ii; i++)
           if (plot.values[i] > 0) {
-            var props = common.areaProps(env, 'Series', serie, i);
+            props = common.areaProps(env, 'Series', serie, i);
             if (typeof props.inside == 'undefined' || props.inside < 0)
               plot.total += plot.values[i];
           }
-        for (var i = 0; i < ii; i++)
+        for (i = 0; i < ii; i++)
           if (plot.values[i] < plot.total * opt.valueThresold) {
             plot.total = plot.total - plot.values[i];
             plot.values[i] = 0;
@@ -3743,8 +3715,8 @@ $.elycharts.pie = {
     var rstart = -rstep, rend = 0;
       
     var pieces = [];
-    for (var serie in opt.values) {
-      var plot = env.plots[serie];
+    for (serie in opt.values) {
+      plot = env.plots[serie];
       var paths = [];
       if (plot.visible) {
         rstart += rstep;
@@ -3752,14 +3724,14 @@ $.elycharts.pie = {
         var angle = env.opt.startAngle, angleplus = 0, anglelimit = 0;
       
         if (plot.total == 0) {
-          var props = common.areaProps(env, 'Series', 'empty');
+          props = common.areaProps(env, 'Series', 'empty');
           paths.push({ path : [ [ 'CIRCLE', cx, cy, r ] ], attr : props.plotProps });
 
         } else {
-          for (var i = 0, ii = plot.values.length; i < ii; i++) {
+          for (i = 0, ii = plot.values.length; i < ii; i++) {
             var value = plot.values[i];
             if (value > 0) {
-              var props = common.areaProps(env, 'Series', serie, i);
+              props = common.areaProps(env, 'Series', serie, i);
               if (typeof props.inside == 'undefined' || props.inside < 0) {
                 angle += anglelimit;
                 angleplus = 360 * value / plot.total;
@@ -3793,7 +3765,7 @@ $.elycharts.pie = {
       } else {
         // Even if serie is not visible it's better to put some empty path (for better transitions). It's not mandatory, just better
         if (opt.values[serie] && opt.values[serie].length)
-          for (var i = 0, ii = opt.values[serie].length; i < ii; i++)
+          for (i = 0, ii = opt.values[serie].length; i < ii; i++)
             paths.push({ path : false, attr : false });
       }
 

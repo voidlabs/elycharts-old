@@ -46,13 +46,14 @@ $.fn.chart = function($options) {
 }
 
 function _initEnv($container, $options) {
+  var k;
   // Compatibility with old $.elysia_charts.default_options and $.elysia_charts.templates
   if ($.elysia_charts) {
     if ($.elysia_charts.default_options)
-      for (var k in $.elysia_charts.default_options)
+      for (k in $.elysia_charts.default_options)
         $.elycharts.templates[k] = $.elysia_charts.default_options[k];
     if ($.elysia_charts.templates)
-      for (var k in $.elysia_charts.templates)
+      for (k in $.elysia_charts.templates)
         $.elycharts.templates[k] = $.elysia_charts.templates[k];
   }
 
@@ -182,7 +183,7 @@ function _normalizeOptionsColor($options, $section) {
       
     if (!$section.tooltip)
       $section.tooltip = {};
-    if (!$section.tooltip.frameProps);
+    if (!$section.tooltip.frameProps)
       $section.tooltip.frameProps = {};
     if ($section.tooltip && $section.tooltip.frameProps && !$section.tooltip.frameProps.stroke)
       $section.tooltip.frameProps.stroke = color;
@@ -216,52 +217,6 @@ $.elycharts.common = {
   _RaphaelInstance : function(c, w, h) {
     var r = Raphael(c, w, h);
 
-    /*r.customAttributes.line = function ( points, rounded ) {
-      console.warn("" + points, points, "" + points == "NaN");
-      if ("" + points == "NaN")
-        console.trace();
-      var path = [];
-      var last = false;
-      for (var i = 0; i < points.length; i++) {
-        var x = points[i][0], y = points[i][1];
-        if (!rounded || !last)
-          path.push([i == 0 ? "M" : "L", x, y]);
-        else
-          path.push(["C", last[0] + rounded, last[1], x - rounded, y, x, y]);
-        last = [x, y];
-      }
-      
-      console.warn(path);
-      return { path : path };
-    };
-
-    r.customAttributes.linearea = function ( points1, points2, rounded ) {
-      return {};
-      var path = [];
-      var last = false;
-      
-      for (var i = 0; i < points1.length; i++) {
-        var x = points1[i][0], y = points1[i][1];
-        if (!rounded || !last)
-          path.push([i == 0 ? "M" : "L", x, y]);
-        else
-          path.push(["C", last[0] + rounded, last[1], x - rounded, y, x, y]);
-        last = [x, y];
-      }
-      last = false;
-      for (i = points2.length - 1; i >= 0; i--) {
-        var x = points2[i][0], y = points2[i][1];
-        if (!rounded || !last)
-          path.push(["L", x, y]);
-        else
-          path.push(["C", last[0] - rounded, last[1], x + rounded, y, x, y]);
-        last = [x, y];
-      }
-      path.push(['z']);
-      console.warn(path);
-      return { path : path };
-    };*/
-    
     r.customAttributes.slice = function (cx, cy, r, rint, aa1, aa2) {
       // Method body is for clockwise angles, but parameters passed are ccw
       a1 = 360 - aa2; a2 = 360 - aa1;
@@ -394,13 +349,15 @@ $.elycharts.common = {
    * di tutti i defaults innestati.
    */
   areaProps : function(env, section, serie, index, subsection) {
+    var props;
+
     // TODO fare una cache e fix del toLowerCase (devono solo fare la prima lettera
     if (!subsection) {
       if (typeof serie == 'undefined' || !serie)
-        var props = env.opt[section.toLowerCase()];
+        props = env.opt[section.toLowerCase()];
 
       else {
-        var props = this._clone(env.opt['default' + section]);
+        props = this._clone(env.opt['default' + section]);
         if (env.opt[section .toLowerCase()] && env.opt[section.toLowerCase()][serie])
           props = this._mergeObjects(props, env.opt[section.toLowerCase()][serie]);
 
@@ -409,7 +366,7 @@ $.elycharts.common = {
       }
 
     } else {
-      var props = this._clone(env.opt[subsection.toLowerCase()]);
+      props = this._clone(env.opt[subsection.toLowerCase()]);
       
       if (typeof serie == 'undefined' || !serie) {
         if (env.opt[section.toLowerCase()] && env.opt[section.toLowerCase()][subsection.toLowerCase()])
@@ -436,12 +393,27 @@ $.elycharts.common = {
   },
   
   linepathAnchors : function(p1x, p1y, p2x, p2y, p3x, p3y, rounded) {
+    var method = 1;
+    if (rounded && rounded.length) {
+      method = rounded[1];
+      rounded = rounded[0];
+    }
+    if (!rounded)
+      rounded = 1;
     var l1 = (p2x - p1x) / 2,
         l2 = (p3x - p2x) / 2,
         a = Math.atan((p2x - p1x) / Math.abs(p2y - p1y)),
         b = Math.atan((p3x - p2x) / Math.abs(p2y - p3y));
     a = p1y < p2y ? Math.PI - a : a;
     b = p3y < p2y ? Math.PI - b : b;
+    if (method == 2) {
+      // If added by Bago to avoid curves beyond min or max
+      if (Math.abs(a - Math.PI / 2) < Math.abs(b - Math.PI / 2))
+          b = Math.PI - a;
+      else
+         a = Math.PI - b;
+    }
+
     var alpha = Math.PI / 2 - ((a + b) % (Math.PI * 2)) / 2,
         dx1 = l1 * Math.sin(alpha + a) / 2 / rounded,
         dy1 = l1 * Math.cos(alpha + a) / 2 / rounded,
@@ -497,7 +469,6 @@ $.elycharts.common = {
       //path = this.linepathRevert(path);
       
     } else {
-      var path = [];
       //var last = false;
       for (var i = 0; i < points.length; i++) {
         var x = points[i][0], y = points[i][1];
@@ -626,6 +597,7 @@ $.elycharts.common = {
    *        si muovono sul proprio sistema di coordinate - la x muove lungo il raggio e la y lungo l'ortogonale)
    */
   movePath : function(env, path, offset, marginlimit, simple) {
+    var p = [], i;
     if (path.length == 1 && path[0][0] == 'RECT')
       return [ [path[0][0], this._movePathX(env, path[0][1], offset[0], marginlimit), this._movePathY(env, path[0][2], offset[1], marginlimit), this._movePathX(env, path[0][3], offset[0], marginlimit), this._movePathY(env, path[0][4], offset[1], marginlimit)] ];
     if (path.length == 1 && path[0][0] == 'SLICE') {
@@ -644,17 +616,15 @@ $.elycharts.common = {
     if (path.length == 1 && path[0][0] == 'TEXT')
       return [ [ path[0][0], path[0][1], path[0][2] + offset[0], path[0][3] + offset[1] ] ];
     if (path.length == 1 && path[0][0] == 'LINE') {
-      var p = [];
-      for (var i = 0; i < path[0][1].length; i++)
+      for (i = 0; i < path[0][1].length; i++)
         p.push( [ this._movePathX(env, path[0][1][i][0], offset[0], marginlimit), this._movePathY(env, path[0][1][i][1], offset[1], marginlimit) ] );
       return [ [ path[0][0], p, path[0][2] ] ];
     }
     if (path.length == 1 && path[0][0] == 'LINEAREA') {
-      var p = [];
-      for (var i = 0; i < path[0][1].length; i++)
+      for (i = 0; i < path[0][1].length; i++)
         p.push( [ this._movePathX(env, path[0][1][i][0], offset[0], marginlimit), this._movePathY(env, path[0][1][i][1], offset[1], marginlimit) ] );
       var pp = [];
-      for (var i = 0; i < path[0][2].length; i++)
+      for (i = 0; i < path[0][2].length; i++)
         pp.push( [ this._movePathX(env, path[0][2][i][0], offset[0], marginlimit), this._movePathY(env, path[0][2][i][1], offset[1], marginlimit) ] );
       return [ [ path[0][0], p, pp, path[0][3] ] ];
     }

@@ -48,7 +48,7 @@ $.elycharts.funnel = {
     var h = hstart; // Starting height
     var hslices = (hend - hstart - opt.topSector - opt.bottomSector) / (values.length > 1 ? values.length - 1 : 1);
     var w = wratio; // Starting width
-    if (path = this.edge(env, h, w, true))
+    if ((path = this.edge(env, h, w, true)))
       pieces.push({path : path, section: 'Edge', attr : env.opt.edgeProps});
     if (opt.topSector > 0 && (path = this.section(env, h, h = h + opt.topSector, w, w)))
       pieces.push({path : path.path, center: path.center, rect: path.rect, section: 'Sector', serie: 'top', attr : env.opt.topSectorProps});
@@ -58,8 +58,8 @@ $.elycharts.funnel = {
       // METODO "cutarea"
       // area taglio attuale / area taglio iniziale = valore attuale / valore iniziare
       // => larghezza attuale = sqrt(values[i] / values[0] * pow(larghezza iniziale / 2, 2)) * 2
-      if (path = this.section(env, h, h = h + hslices, w, 
-        opt.method == 'width' ? w = v / v0 * wratio : w = Math.sqrt(v / v0 * Math.pow(wratio / 2, 2)) * 2))
+      if ((path = this.section(env, h, h = h + hslices, w,
+        opt.method == 'width' ? w = v / v0 * wratio : w = Math.sqrt(v / v0 * Math.pow(wratio / 2, 2)) * 2)))
       var props = common.areaProps(env, 'Series', serie, i - 1);
       paths.push({path : path.path, center: path.center, rect: path.rect, attr : props.plotProps});
     }
@@ -67,7 +67,7 @@ $.elycharts.funnel = {
     
     if (opt.bottomSector > 0 && (path = this.section(env, h, h = h + opt.bottomSector, w, w)))
       pieces.push({path : path.path, center: path.center, rect: path.rect, section: 'Sector', serie: 'bottom', attr : env.opt.bottomSectorProps});
-    if (path = this.edge(env, h, w, false))
+    if ((path = this.edge(env, h, w, false)))
       pieces.push({path : path, section : 'Edge', attr : env.opt.edgeProps});
 
     return pieces;
