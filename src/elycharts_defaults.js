@@ -1,5 +1,5 @@
 /*!*********************************************************************
- * ELYCHARTS v2.1.1
+ * ELYCHARTS v2.1.2
  **********************************************************************/
 
 (function($) {
@@ -153,7 +153,8 @@ $.elycharts.templates = {
       // Serie specifica usata quando ci sono "dati vuoti" (ad esempio quando un piechart e' a 0)
       empty : {
         //plotProps : { fill : "#D0D0D0" },
-        label : { active : false }
+        label : { active : false },
+        tooltip : { active : false }
       }
       /*root : {
         values : []

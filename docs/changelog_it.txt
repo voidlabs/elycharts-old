@@ -1,3 +1,6 @@
+v2.1.2
+- supporto per series.empty.tooltip e series.empty.label
+
 v2.1.1
 - REFACTORING per gestione modulare effettiva, split del codice nei vari componenti
 - script per riunificazione e minimizzazione codice da distribuire

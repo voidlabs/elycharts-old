@@ -4,7 +4,7 @@
 
 (function($) {
 
-var featuresmanager = $.elycharts.featuresmanager;
+//var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
 /***********************************************************************
@@ -28,26 +28,28 @@ $.elycharts.labelmanager = {
       return;
     
     if (env.opt.labels && (env.opt.type == 'pie' || env.opt.type == 'funnel')) {
-      var lastSerie = false, lastIndex = false;
+      var /*lastSerie = false, */lastIndex = false;
+      var paths;
       
       for (var i = 0; i < pieces.length; i++) {
         if (pieces[i].section == 'Series' && pieces[i].subSection == 'Plot') {
           var props = common.areaProps(env, 'Series', pieces[i].serie);
+          if (env.emptySeries && env.opt.series.empty)
+            props.label = $.extend(true, props.label, env.opt.series.empty.label);
           if (props && props.label && props.label.active) {
-            var paths = [];
+            paths = [];
             for (var index = 0; index < pieces[i].paths.length; index++) 
               if (pieces[i].paths[index].path) {
-                lastSerie = pieces[i].serie;
+                //lastSerie = pieces[i].serie;
                 lastIndex = index;
                 paths.push(this.showLabel(env, pieces[i], pieces[i].paths[index], pieces[i].serie, index, pieces));
-              } else {
+              } else
                 paths.push({ path : false, attr : false });
-              }
             pieces.push({ section : pieces[i].section, serie : pieces[i].serie, subSection : 'Label', paths: paths });
           }
         }
         else if (pieces[i].section == 'Sector' && pieces[i].serie == 'bottom' && !pieces[i].subSection && lastIndex < env.opt.labels.length - 1) {
-          var paths = [];
+          paths = [];
           paths.push(this.showLabel(env, pieces[i], pieces[i], 'Series', env.opt.labels.length - 1, pieces));
           pieces.push({ section : pieces[i].section, serie : pieces[i].serie, subSection : 'Label', paths: paths });
         }
@@ -85,11 +87,12 @@ $.elycharts.labelmanager = {
         }
         style.position = 'absolute';
         style['z-index'] = 25;
-        
+
+        var el;
         if (typeof label == 'string')
-          var el = $('<div>' + label + '</div>').css(style).prependTo(env.container);
+          el = $('<div>' + label + '</div>').css(style).prependTo(env.container);
         else
-          var el = $(label).css(style).prependTo(env.container);
+          el = $(label).css(style).prependTo(env.container);
           
         // Centramento corretto label
         if (env.opt.features.debug.active && el.height() == 0)
@@ -117,6 +120,7 @@ $.elycharts.labelmanager = {
 
       }
     }
+    return false;
   }
 }
 

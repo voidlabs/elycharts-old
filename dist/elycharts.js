@@ -1,5 +1,5 @@
 /*!*********************************************************************
- * ELYCHARTS v2.1.1
+ * ELYCHARTS v2.1.2
  **********************************************************************/
 
 (function($) {
@@ -153,7 +153,8 @@ $.elycharts.templates = {
       // Serie specifica usata quando ci sono "dati vuoti" (ad esempio quando un piechart e' a 0)
       empty : {
         //plotProps : { fill : "#D0D0D0" },
-        label : { active : false }
+        label : { active : false },
+        tooltip : { active : false }
       }
       /*root : {
         values : []
@@ -2394,7 +2395,7 @@ $.elycharts.featuresmanager.register($.elycharts.highlightmanager, 21);
 
 (function($) {
 
-var featuresmanager = $.elycharts.featuresmanager;
+//var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
 /***********************************************************************
@@ -2418,26 +2419,28 @@ $.elycharts.labelmanager = {
       return;
     
     if (env.opt.labels && (env.opt.type == 'pie' || env.opt.type == 'funnel')) {
-      var lastSerie = false, lastIndex = false;
+      var /*lastSerie = false, */lastIndex = false;
+      var paths;
       
       for (var i = 0; i < pieces.length; i++) {
         if (pieces[i].section == 'Series' && pieces[i].subSection == 'Plot') {
           var props = common.areaProps(env, 'Series', pieces[i].serie);
+          if (env.emptySeries && env.opt.series.empty)
+            props.label = $.extend(true, props.label, env.opt.series.empty.label);
           if (props && props.label && props.label.active) {
-            var paths = [];
+            paths = [];
             for (var index = 0; index < pieces[i].paths.length; index++) 
               if (pieces[i].paths[index].path) {
-                lastSerie = pieces[i].serie;
+                //lastSerie = pieces[i].serie;
                 lastIndex = index;
                 paths.push(this.showLabel(env, pieces[i], pieces[i].paths[index], pieces[i].serie, index, pieces));
-              } else {
+              } else
                 paths.push({ path : false, attr : false });
-              }
             pieces.push({ section : pieces[i].section, serie : pieces[i].serie, subSection : 'Label', paths: paths });
           }
         }
         else if (pieces[i].section == 'Sector' && pieces[i].serie == 'bottom' && !pieces[i].subSection && lastIndex < env.opt.labels.length - 1) {
-          var paths = [];
+          paths = [];
           paths.push(this.showLabel(env, pieces[i], pieces[i], 'Series', env.opt.labels.length - 1, pieces));
           pieces.push({ section : pieces[i].section, serie : pieces[i].serie, subSection : 'Label', paths: paths });
         }
@@ -2475,11 +2478,12 @@ $.elycharts.labelmanager = {
         }
         style.position = 'absolute';
         style['z-index'] = 25;
-        
+
+        var el;
         if (typeof label == 'string')
-          var el = $('<div>' + label + '</div>').css(style).prependTo(env.container);
+          el = $('<div>' + label + '</div>').css(style).prependTo(env.container);
         else
-          var el = $(label).css(style).prependTo(env.container);
+          el = $(label).css(style).prependTo(env.container);
           
         // Centramento corretto label
         if (env.opt.features.debug.active && el.height() == 0)
@@ -2507,6 +2511,7 @@ $.elycharts.labelmanager = {
 
       }
     }
+    return false;
   }
 }
 
@@ -3012,8 +3017,10 @@ $.elycharts.tooltipmanager = {
   
   onMouseEnter : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
+    if (env.emptySeries && env.opt.series.empty)
+      props = $.extend(true, props, env.opt.series.empty.tooltip);
     if (!props || !props.active)
-      return;
+      return false;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
       return this.onMouseExit(env, serie, index, mouseAreaData);
@@ -3029,12 +3036,16 @@ $.elycharts.tooltipmanager = {
     }
 
     env.tooltipContainer.css(this._prepareShow(env, props, mouseAreaData, tip)).fadeIn(env.opt.features.tooltip.fadeDelay);
+
+    return true;
   },
   
   onMouseChanged : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
+    if (env.emptySeries && env.opt.series.empty)
+      props = $.extend(true, props, env.opt.series.empty.tooltip);
     if (!props || !props.active)
-      return;
+      return false;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
       return this.onMouseExit(env, serie, index, mouseAreaData);
@@ -3044,15 +3055,21 @@ $.elycharts.tooltipmanager = {
     env.tooltipContainer.clearQueue();
     // Nota: Non passo da animationStackPush, i tooltip non sono legati a piece
     env.tooltipContainer.animate(this._prepareShow(env, props, mouseAreaData, tip), env.opt.features.tooltip.moveDelay, 'linear' /*swing*/);
+
+    return true;
   },
   
   onMouseExit : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
+    if (env.emptySeries && env.opt.series.empty)
+      props = $.extend(true, props, env.opt.series.empty.tooltip);
     if (!props || !props.active)
-      return;
+      return false;
 
     //env.tooltipContainer.unbind();
     env.tooltipContainer.fadeOut(env.opt.features.tooltip.fadeDelay);
+
+    return true;
   }
 }
 
@@ -3767,10 +3784,12 @@ $.elycharts.pie = {
         var angle = env.opt.startAngle, angleplus = 0, anglelimit = 0;
       
         if (plot.total == 0) {
+          env.emptySeries = true;
           props = common.areaProps(env, 'Series', 'empty');
           paths.push({ path : [ [ 'CIRCLE', cx, cy, r ] ], attr : props.plotProps });
 
         } else {
+          env.emptySeries = false;
           for (i = 0, ii = plot.values.length; i < ii; i++) {
             var value = plot.values[i];
             if (value > 0) {

@@ -65,10 +65,12 @@ $.elycharts.pie = {
         var angle = env.opt.startAngle, angleplus = 0, anglelimit = 0;
       
         if (plot.total == 0) {
+          env.emptySeries = true;
           props = common.areaProps(env, 'Series', 'empty');
           paths.push({ path : [ [ 'CIRCLE', cx, cy, r ] ], attr : props.plotProps });
 
         } else {
+          env.emptySeries = false;
           for (i = 0, ii = plot.values.length; i < ii; i++) {
             var value = plot.values[i];
             if (value > 0) {

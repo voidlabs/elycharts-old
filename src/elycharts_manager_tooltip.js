@@ -118,8 +118,10 @@ $.elycharts.tooltipmanager = {
   
   onMouseEnter : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
+    if (env.emptySeries && env.opt.series.empty)
+      props = $.extend(true, props, env.opt.series.empty.tooltip);
     if (!props || !props.active)
-      return;
+      return false;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
       return this.onMouseExit(env, serie, index, mouseAreaData);
@@ -135,12 +137,16 @@ $.elycharts.tooltipmanager = {
     }
 
     env.tooltipContainer.css(this._prepareShow(env, props, mouseAreaData, tip)).fadeIn(env.opt.features.tooltip.fadeDelay);
+
+    return true;
   },
   
   onMouseChanged : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
+    if (env.emptySeries && env.opt.series.empty)
+      props = $.extend(true, props, env.opt.series.empty.tooltip);
     if (!props || !props.active)
-      return;
+      return false;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
       return this.onMouseExit(env, serie, index, mouseAreaData);
@@ -150,15 +156,21 @@ $.elycharts.tooltipmanager = {
     env.tooltipContainer.clearQueue();
     // Nota: Non passo da animationStackPush, i tooltip non sono legati a piece
     env.tooltipContainer.animate(this._prepareShow(env, props, mouseAreaData, tip), env.opt.features.tooltip.moveDelay, 'linear' /*swing*/);
+
+    return true;
   },
   
   onMouseExit : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
+    if (env.emptySeries && env.opt.series.empty)
+      props = $.extend(true, props, env.opt.series.empty.tooltip);
     if (!props || !props.active)
-      return;
+      return false;
 
     //env.tooltipContainer.unbind();
     env.tooltipContainer.fadeOut(env.opt.features.tooltip.fadeDelay);
+
+    return true;
   }
 }
 
