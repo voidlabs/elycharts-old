@@ -4,7 +4,7 @@
 
 (function($) {
 
-var featuresmanager = $.elycharts.featuresmanager;
+//var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
 /***********************************************************************
@@ -89,14 +89,14 @@ $.elycharts.tooltipmanager = {
       // L'area è su una fetta di torta (pie)
       var path = mouseAreaData.path[0];
       
-			// Genera la posizione del tip considerando che deve stare all'interno di un cerchio che è sempre dalla parte opposta dell'area
-			// e deve essere il piu' vicino possibile all'area
-			var w = props.width && props.width != 'auto' ? props.width : 100;
-			var h = props.height && props.height != 'auto' ? props.height : 100;
-			// Raggio del cerchio che contiene il tip
-			var cr = Math.sqrt(Math.pow(w,2) + Math.pow(h,2)) / 2;
-			if (cr > env.opt.r) 
-				cr = env.opt.r;
+      // Genera la posizione del tip considerando che deve stare all'interno di un cerchio che è sempre dalla parte opposta dell'area
+      // e deve essere il piu' vicino possibile all'area
+      var w = props.width && props.width != 'auto' ? props.width : 100;
+      var h = props.height && props.height != 'auto' ? props.height : 100;
+      // Raggio del cerchio che contiene il tip
+      var cr = Math.sqrt(Math.pow(w,2) + Math.pow(h,2)) / 2;
+      if (cr > env.opt.r)
+              cr = env.opt.r;
       
       var tipangle = path[5] + (path[6] - path[5]) / 2 + 180;
       var rad = Math.PI / 180;
@@ -118,7 +118,7 @@ $.elycharts.tooltipmanager = {
   
   onMouseEnter : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
-    if (!props)
+    if (!props || !props.active)
       return;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
@@ -139,7 +139,7 @@ $.elycharts.tooltipmanager = {
   
   onMouseChanged : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
-    if (!props)
+    if (!props || !props.active)
       return;
 
     if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
@@ -154,10 +154,10 @@ $.elycharts.tooltipmanager = {
   
   onMouseExit : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
-    if (!props)
+    if (!props || !props.active)
       return;
 
-    env.tooltipContainer.unbind();
+    //env.tooltipContainer.unbind();
     env.tooltipContainer.fadeOut(env.opt.features.tooltip.fadeDelay);
   }
 }

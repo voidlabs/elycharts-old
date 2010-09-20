@@ -453,7 +453,7 @@ $.elycharts.common = {
   linepath : function ( points, rounded ) {
     var path = [];
     if (rounded) {
-      var anc;
+      var anc = false;
       for (var j = 0, jj = points.length - 1; j < jj ; j++) {
         if (j) {
           var a = this.linepathAnchors(points[j - 1][0], points[j - 1][1], points[j][0], points[j][1], points[j + 1][0], points[j + 1][1], rounded);
@@ -464,7 +464,8 @@ $.elycharts.common = {
           anc = [ points[j][0], points[j][1] ];
         }
       }
-      path.push([ "C", anc[0], anc[1], points[jj][0], points[jj][1], points[jj][0], points[jj][1] ]);
+      if (anc)
+        path.push([ "C", anc[0], anc[1], points[jj][0], points[jj][1], points[jj][0], points[jj][1] ]);
       
       //path = this.linepathRevert(path);
       
@@ -792,7 +793,7 @@ $.elycharts.common = {
               // Elemento da non mostrare / nascondere: non deve fare nulla
               piece.hide = true;
             }
-            else if (piece.path.length == 1 && piece.path[0][0] == 'CIRCLE') {
+            /*else if (piece.path.length == 1 && piece.path[0][0] == 'CIRCLE') {
               // CIRCLE
               if (!piece.element) {
                 if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
@@ -837,7 +838,7 @@ $.elycharts.common = {
                   piece.element = this.showPath(env, piece.path)
               }
 
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'TEXT') {
+            } */ else if (piece.path.length == 1 && piece.path[0][0] == 'TEXT') {
               // TEXT
               
               // L'animazione da un relement all'altro non e' supportata, quindi se c'e' un vecchio elemento lo nascondo (con force = true, altrimenti rischio di non farlo visto che nel frattempo c'e' la view della nuova versione dello stesso elemento)

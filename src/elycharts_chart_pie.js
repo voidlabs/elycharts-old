@@ -16,14 +16,14 @@ $.elycharts.pie = {
   },
   
   draw : function(env) {
-    var paper = env.paper;
+    //var paper = env.paper;
     var opt = env.opt;
     
     var w = env.opt.width;
     var h = env.opt.height;
     var r = env.opt.r ? env.opt.r : Math.floor((w < h ? w : h) / 2.5);
- 		var cx = env.opt.cx ? env.opt.cx : Math.floor(w / 2);
-		var cy = env.opt.cy ? env.opt.cx : Math.floor(h / 2);
+    var cx = env.opt.cx ? env.opt.cx : Math.floor(w / 2);
+    var cy = env.opt.cy ? env.opt.cx : Math.floor(h / 2);
     
     var cnt = 0, i, ii, serie, plot, props;
     for (serie in opt.values) {
@@ -80,7 +80,7 @@ $.elycharts.pie = {
               } else {
                 angleplus = 360 * values[props.inside] / plot.total * value / values[props.inside];
               }
-              var popangle = angle + (angleplus / 2);
+              //var popangle = angle + (angleplus / 2);
               if (props.r) {
                 if (props.r > 0) {
                   if (props.r <= 1)

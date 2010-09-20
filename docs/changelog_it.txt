@@ -10,10 +10,16 @@ v2.1.1
 - fix manager tooltip
 - line chart: supporto per opzione "rounded" come array. [#, 2] e' per usare il metodo suggerito da Bago ( [#, 1] o solo # è il metodo standard)
 - fix in gestione precisione dei numeri in calcolo min/max degli assi e in view label [#4]
-- fix in animatione "reg" con serie di un solo valore
+- fix in animazione "reg" con serie di un solo valore
 - fix in visualizzazione label asse dopo aver nascosto tutte le serie e rivisualizzato una [#1]
 - fix in funnel highlight animation [#2]
 - cleanup codice
+- fix: generazione linea con un solo valore
+- spostata opzione labelsCenter in features.grid.labelsCenter
+- supporto per features.mousearea.indexCenter (bar|line|auto). Migliorie in serie.lineCenter e features.highlight.indexHighlight, features.grid.labelsCenter (entrambi supportano il valore "auto")
+- fix vari in animazione reg
+- fix animazioni con pie vuota
+- aggiunta opzione serie.tooltip.active
 
 v2.1.0
 - RENAME da elysia_charts a elycharts

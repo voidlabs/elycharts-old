@@ -54,8 +54,8 @@ $(document).ready(function(){
       },
       highlight : {
         //move : 10,
-        scale : [1.1, 1.1],
-        restoreSpeed : 500
+        scale : [1.1, 1.1]
+        /*restoreSpeed : 500*/
       }
     },
     series : { root : { values : [
@@ -103,20 +103,21 @@ $(document).ready(function(){
                         c : [0,0.9,0,0]
     },
     labels : ['a', 'b', 'c', 'd'],
+    /*
     tooltips : {
       a : [1,2,3,4],
       b : [3,4,1,2],
       c : [4,3,2,1]
-    },
-    anchors : {
+    },*/
+    tooltips : ['a', 'b', 'c', 'd'],
+    /*anchors : {
       a: ['#a', '#a', '#a', '#a'],
       b: ['#a', '#a', '#a', '#a'],
       c: ['#a', '#a', '#a', '#a']
-    },
-    //tooltips : ['a', 'b', 'c', 'd'],
+    },*/
 
     features : {
-      mousearea : { /*type : 'index'*/ },
+      mousearea : { type : 'index' },
       animation : {
         startAnimation : { active : true, propsFrom : { opacity : 0 }, delay: 0 } ,
         stepAnimation  : { speed : 2000 }
@@ -138,7 +139,7 @@ $(document).ready(function(){
       }
     },
 
-    labelsCenter : true,
+    labelsCenter : "auto",
     defaultAxis : {
       labels : true,
       labelsCompactUnits : ['k', 'M'],
@@ -199,7 +200,7 @@ $(document).ready(function(){
   $("#holder3").chart({
     type : 'pie',
 
-    values : [1,2,3],
+    values : [1, 2, 3],
 
     tooltips : [1,2,3,4],
     labels : ['a', 'b', 'c'],
@@ -214,7 +215,7 @@ $(document).ready(function(){
         highlight : 1
       },
       startAnimation : {
-        active : true,
+        active : false,
         type : 'grow',
         speed : 3000,
         propsFrom : {

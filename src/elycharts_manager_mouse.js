@@ -38,17 +38,19 @@ $.elycharts.mousemanager = {
       });
     }
 
+    var i, j;
+
     // Adding mouseover only in right area, based on pieces
     env.mouseAreas = [];
     if (env.opt.features.mousearea.type == 'single') {
       // SINGLE: Every serie's index is an area
-      for (var i = 0; i < pieces.length; i++) {
+      for (i = 0; i < pieces.length; i++) {
         if (pieces[i].mousearea) {
           // pathstep
           if (!pieces[i].paths) {
             // path standard, generating an area for each point
             if (pieces[i].path.length >= 1 && (pieces[i].path[0][0] == 'LINE' || pieces[i].path[0][0] == 'LINEAREA'))
-              for (var j = 0; j < pieces[i].path[0][1].length; j++) {
+              for (j = 0; j < pieces[i].path[0][1].length; j++) {
                 env.mouseAreas.push({
                   path : [ [ 'CIRCLE', pieces[i].path[0][1][j][0], pieces[i].path[0][1][j][1], 10 ] ],
                   piece : pieces[i],
@@ -59,7 +61,7 @@ $.elycharts.mousemanager = {
               }
               
             else // Code below is only for standard path - it should be useless now (now there are only LINE and LINEAREA)
-              for (var j = 0; j < pieces[i].path.length; j++) {
+              for (j = 0; j < pieces[i].path.length; j++) {
                 env.mouseAreas.push({
                   path : [ [ 'CIRCLE', common.getX(pieces[i].path[j]), common.getY(pieces[i].path[j]), 10 ] ],
                   piece : pieces[i],
@@ -72,7 +74,7 @@ $.elycharts.mousemanager = {
           // paths
           } else if (pieces[i].paths) {
             // Set of paths (bar graph?), generating overlapped areas
-            for (var j = 0; j < pieces[i].paths.length; j++)
+            for (j = 0; j < pieces[i].paths.length; j++)
               if (pieces[i].paths[j].path)
                 env.mouseAreas.push({
                   path : pieces[i].paths[j].path,
@@ -86,10 +88,21 @@ $.elycharts.mousemanager = {
       }
     } else {
       // INDEX: Each index (in every serie) is an area
-      var delta = (env.opt.width - env.opt.margins[3] - env.opt.margins[1]) / (env.opt.labels.length > 0 ? env.opt.labels.length : 1);
+      var indexCenter = env.opt.features.mousearea.indexCenter;
+      if (indexCenter == 'auto')
+        indexCenter = env.indexCenter;
+      var start, delta;
+      if (indexCenter == 'bar') {
+        delta = (env.opt.width - env.opt.margins[3] - env.opt.margins[1]) / (env.opt.labels.length > 0 ? env.opt.labels.length : 1);
+        start = env.opt.margins[3];
+      } else {
+        delta = (env.opt.width - env.opt.margins[3] - env.opt.margins[1]) / (env.opt.labels.length > 1 ? env.opt.labels.length - 1 : 1);
+        start = env.opt.margins[3] - delta / 2;
+      }
+
       for (var index in env.opt.labels) {
         env.mouseAreas.push({
-          path : [ [ 'RECT', env.opt.margins[3] + index * delta, env.opt.margins[0], env.opt.margins[3] + (index + 1) * delta, env.opt.height - env.opt.margins[2] ] ],
+          path : [ [ 'RECT', start + index * delta, env.opt.margins[0], start + (index + 1) * delta, env.opt.height - env.opt.margins[2] ] ],
           piece : false,
           pieces : pieces,
           index : parseInt(index),
@@ -98,17 +111,18 @@ $.elycharts.mousemanager = {
       }
     }
 
+    var syncenv = false;
     if (!env.opt.features.mousearea.syncTag) {
       env.mouseareaenv = { chartEnv : false, mouseObj : false, caller : false, inArea : -1, timer : false };
-      var syncenv = env.mouseareaenv;
+      syncenv = env.mouseareaenv;
     } else {
       if (!$.elycharts.mouseareaenv)
         $.elycharts.mouseareaenv = {};
       if (!$.elycharts.mouseareaenv[env.opt.features.mousearea.syncTag])
         $.elycharts.mouseareaenv[env.opt.features.mousearea.syncTag] = { chartEnv : false, mouseObj : false, caller : false, inArea : -1, timer : false };
-      var syncenv = $.elycharts.mouseareaenv[env.opt.features.mousearea.syncTag];
+      syncenv = $.elycharts.mouseareaenv[env.opt.features.mousearea.syncTag];
     }
-    for (var i = 0; i < env.mouseAreas.length; i++) {
+    for (i = 0; i < env.mouseAreas.length; i++) {
       env.mouseAreas[i].area = common.showPath(env, env.mouseAreas[i].path, paper).attr({stroke: "none", fill: "#fff", opacity: 0});
       
       (function(env, obj, objidx, caller, syncenv) {

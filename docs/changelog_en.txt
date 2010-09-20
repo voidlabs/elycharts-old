@@ -14,3 +14,9 @@ v2.1.1
 - fix in label rendering when hiding all series and re-showing one [#1]
 - fix in funnel highlight animation [#2]
 - code cleanup
+- fix in line generation for series with only one value
+- moved option labelsCenter to features.grid.labelsCenter
+- support for features.mousearea.indexCenter (bar|line|auto). Improvement in serie.lineCenter and features.highlight.indexHighlight, features.grid.labelsCenter (both suppors "auto" value)
+- fixes in reg animation
+- fix empty pie animations
+- added option serie.tooltip.active

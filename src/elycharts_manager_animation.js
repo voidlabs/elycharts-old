@@ -198,7 +198,7 @@ $.elycharts.animationmanager = {
       case 'pie':
         if (piece.subSection == 'Plot')
           for (i = 0; i < piece.paths.length; i++)
-            if (piece.paths[i].path)
+            if (piece.paths[i].path && piece.paths[i].path[0][0] == 'SLICE')
               piece.paths[i].animation.startPath.push([ 'SLICE', piece.paths[i].path[0][1], piece.paths[i].path[0][2], piece.paths[i].path[0][4] + piece.paths[i].path[0][3] * 0.1, piece.paths[i].path[0][4], piece.paths[i].path[0][5], piece.paths[i].path[0][6] ]);
             
         break;
@@ -311,7 +311,7 @@ $.elycharts.animationmanager = {
       
         if (piece.subSection == 'Plot')
           for (i = 0; i < piece.paths.length; i++)
-            if (piece.paths[i].path)
+            if (piece.paths[i].path && piece.paths[i].path[0][0] == 'SLICE')
               piece.paths[i].animation.startPath.push([ 'SLICE', piece.paths[i].path[0][1], piece.paths[i].path[0][2], piece.paths[i].path[0][3], piece.paths[i].path[0][4], i * delta, (i + 1) * delta ]);
         
         break;
@@ -362,8 +362,10 @@ $.elycharts.animationmanager = {
               // BAR
               c = piece.paths.length;
               if (c > 1) {
-                y1 = common.getY(piece.paths[0].path[0]);
-                y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
+                for (i = 0; !piece.paths[i].path && i < piece.paths.length; i++) {}
+                y1 = piece.paths[i].path ? common.getY(piece.paths[i].path[0]) : 0;
+                for (i = piece.paths.length - 1; !piece.paths[i].path && i >= 0; i--) {}
+                y2 = piece.paths[i].path ? common.getY(piece.paths[i].path[0]) : 0;
 
                 for (i = 0; i < piece.paths.length; i++)
                   if (piece.paths[i].path)
@@ -390,12 +392,16 @@ $.elycharts.animationmanager = {
 
           case 'Dot':
             c = piece.paths.length;
-            y1 = common.getY(piece.paths[0].path[0]);
-            y2 = common.getY(piece.paths[piece.paths.length - 1].path[0]);
-            
-            for (i = 0; i < piece.paths.length; i++)
-              if (piece.paths[i].path)
-                piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3]]);
+            if (c > 1) {
+              for (i = 0; !piece.paths[i].path && i < piece.paths.length; i++) {}
+              y1 = piece.paths[i].path ? common.getY(piece.paths[i].path[0]) : 0;
+              for (i = piece.paths.length - 1; !piece.paths[i].path && i >= 0; i--) {}
+              y2 = piece.paths[i].path ? common.getY(piece.paths[i].path[0]) : 0;
+
+              for (i = 0; i < piece.paths.length; i++)
+                if (piece.paths[i].path)
+                  piece.paths[i].animation.startPath.push(['CIRCLE', piece.paths[i].path[0][1], y1 + (y2 - y1) / (c - 1) * i, piece.paths[i].path[0][3]]);
+            }
             break;
         }
         break;

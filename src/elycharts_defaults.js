@@ -67,6 +67,7 @@ $.elycharts.templates = {
       
       // Impostazioni dei tooltip
       tooltip : {
+        active : true,
         // Se width ed height vengono impostati a 0 o ad "auto" (equivalenti) non vengono fissate dimensioni, quindi il contenuto si autodimensiona in funzione del tooltip
         // Impostare a 0|auto è incompatibile con il frame SVG, quindi viene automaticamente disabilitato (come se frameProps = false)
         width: 100, height: 50, 
@@ -174,13 +175,15 @@ $.elycharts.templates = {
       mousearea : {
         // 'single' le aree sensibili sono relative a ogni valore di ogni serie, se 'index' il mouse attiva tutte le serie per un indice
         type : 'single',
+        // In caso di type = 'index', indica se le aree si basano sulle barre ('bar') o sui punti di una linea ('line'). Specificare 'auto' per scegliere automaticamente
+        indexCenter : 'auto',
         // Quanto tempo puo' passare nel passaggio da un'area all'altra per considerarlo uno spostamento di puntatore
         areaMoveDelay : 500,
         // Se diversi chart specificano lo stesso syncTag quando si attiva l'area di uno si disattivano quelle degli altri
         syncTag: false
       },
       highlight : {
-        // Evidenzia tutto l'indice con una barra ("bar"), una linea ("line") o una linea centrata sulle barre ("barline")
+        // Evidenzia tutto l'indice con una barra ("bar"), una linea ("line") o una linea centrata sulle barre ("barline"). Se "auto" decide in autonomia tra bar e line
         //indexHighlight : 'barline',
         indexHighlightProps : { opacity : 1 /*fill : 'yellow', opacity : .3, scale : ".5 1"*/ }
       },
@@ -230,10 +233,10 @@ $.elycharts.templates = {
         padding : [ 5, 5 ],
         // La distanza dal bordo sinistro
         left : 10,
-				// Percorso della linea: [ [ x, y iniziali (rispetto al punto di inizio standard)], ... [x, y intermedi (rispetto al punto di inizio standard)] ..., [x, y finale (rispetto all'angolo del balloon più vicino al punto di inizio)] ]
-				line : [ [ 0, 0 ], [0, 0] ],
-				// Proprietà della linea
-				lineProps : { } 
+        // Percorso della linea: [ [ x, y iniziali (rispetto al punto di inizio standard)], ... [x, y intermedi (rispetto al punto di inizio standard)] ..., [x, y finale (rispetto all'angolo del balloon più vicino al punto di inizio)] ]
+        line : [ [ 0, 0 ], [0, 0] ],
+        // Proprietà della linea
+        lineProps : { }
       },
       legend : {
         horizontal : false,
@@ -262,7 +265,6 @@ $.elycharts.templates = {
     template : 'common',
     
     barMargins : 0,
-    labelsCenter : 0,
 
     // Axis
     defaultAxis : {
@@ -314,8 +316,8 @@ $.elycharts.templates = {
       cumulative : false,
       // In caso di type="line" indica l'arrotondamento della linea
       rounded : 1,
-      // Mette il punto di intersezione al centro dell'intervallo invece che al limite (per allineamento con bars)
-      lineCenter : 0,
+      // Mette il punto di intersezione al centro dell'intervallo invece che al limite (per allineamento con bars). Se 'auto' decide autonomamente
+      lineCenter : 'auto',
       // Permette di impilare le serie (i valori di uno iniziano dove finiscono quelli del precedente) con un altra (purche' dello stesso tipo)
       // Specificare "true" per impilare con la serie visibile precedente, oppure il nome della serie sulla quale impilare
       // stacked : false,
@@ -359,6 +361,9 @@ $.elycharts.templates = {
         props : {stroke: '#e0e0e0', "stroke-width": 1},
         // Dimensioni extra delle rette [up, dx, down, sx]
         extra : [0, 0, 0, 0],
+        // Indica se le label (e le rispettive linee del grid) vanno centrate sulle barre (true), quindi tra 2 linee, o sui punti della serie (false), quindi su una sola linea
+        // Se specificato "auto" decide in autonomia
+        labelsCenter : "auto",
         ticks : {
           // Attiva le barrette sugli assi [x, l, r]
           active : [false, false, false],
@@ -387,9 +392,9 @@ $.elycharts.templates = {
     // Soglia (rapporto sul totale) entro la quale una fetta non viene visualizzata
     valueThresold : 0.006,
     
-		defaultSeries : {
-			// r: .5, raggio usato solo per questo spicchio, se <=1 e' in rapporto al raggio generale
-			// inside: X, inserisce questo spicchio dentro un altro (funziona solo inside: precedente, e non gestisce + spicchi dentro l'altro)
+    defaultSeries : {
+      // r: .5, raggio usato solo per questo spicchio, se <=1 e' in rapporto al raggio generale
+      // inside: X, inserisce questo spicchio dentro un altro (funziona solo inside: precedente, e non gestisce + spicchi dentro l'altro)
     }
   },
 

@@ -20,6 +20,7 @@ $.elycharts.line = {
       env.plots = {};
       env.axis = { x : {} };
       env.barno = 0;
+      env.indexCenter = 'line';
     }
     
     var opt = env.opt;
@@ -45,6 +46,8 @@ $.elycharts.line = {
         if (values[serie]) {
           props = common.areaProps(env, 'Series', serie);
           plot.type = props.type;
+          if (props.type == 'bar')
+            env.indexCenter = 'bar';
           
           if (props.visible) {
             plot.visible = true;
@@ -162,7 +165,12 @@ $.elycharts.line = {
       var data = values[serie];
       props = common.areaProps(env, 'Series', serie);
       plot = plots[serie];
-      
+
+      if (props.lineCenter && props.lineCenter == 'auto')
+        props.lineCenter = (env.indexCenter == 'bar');
+      else if (props.lineCenter && env.indexCenter == 'line')
+        env.indexCenter = 'bar';
+
       if (values[serie] && props.visible) {
         var deltaY = (opt.height - opt.margins[2] - opt.margins[0]) / (plot.max - plot.min);
         
@@ -218,7 +226,8 @@ $.elycharts.line = {
               var y2 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.from[i] - plot.min));
 
               pieceBar.push({path : [ [ 'RECT', x1, y1, x1 + bwid - bpad * 2, y2 ] ], attr : props.plotProps });
-            }
+            } else
+              pieceBar.push({path : false, attr : false });
           }
           
           if (pieceBar.length)
@@ -243,8 +252,8 @@ $.elycharts.line = {
   }, 
   
   grid : function(env, pieces) {
-    // DEP: axis, [=> series, values], labels, margins, width, height, labelsCenter, grid*
-    if (common.executeIfChanged(env, ['values', 'series', 'axis', 'labels', 'margins', 'width', 'height', 'labelsCenter', 'features.grid'])) {
+    // DEP: axis, [=> series, values], labels, margins, width, height, grid*
+    if (common.executeIfChanged(env, ['values', 'series', 'axis', 'labels', 'margins', 'width', 'height', 'features.grid'])) {
       var opt = env.opt;
       var props = env.opt.features.grid;
       var paper = env.paper;
@@ -255,6 +264,9 @@ $.elycharts.line = {
       var i, j, x, y, lw, labx, laby, labe, val, txt;
       // Label asse X
       var paths = [];
+      var labelsCenter = props.labelsCenter;
+      if (labelsCenter == 'auto')
+        labelsCenter = (env.indexCenter == 'bar');
 
       if (axis.x && axis.x.props.labels)
         for (i = 0; i < labels.length; i++)
@@ -265,7 +277,7 @@ $.elycharts.line = {
             if (axis.x.props.labelsFormatHandler)
               val = axis.x.props.labelsFormatHandler(val);
             txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
-            labx = (opt.labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (opt.labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
+            labx = (labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
             laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
             labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
             if (axis.x.props.labelsRotate)
@@ -282,17 +294,17 @@ $.elycharts.line = {
             } else if (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start") {
               // Label non ruotate ma con labelsAnchor
               labe.attr({"text-anchor" : "start"});
-              lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (opt.labelsCenter ? deltaBarX : deltaX);
+              lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (labelsCenter ? deltaBarX : deltaX);
               if (axis.x.props.labelsHideCovered && lw > 0) {
-                j = i + Math.ceil(lw / (opt.labelsCenter ? deltaBarX : deltaX));
+                j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
                 for (; i < j && i + 1 < labels.length; i++)
                   labels[i + 1] = false;
               }
             } else if (axis.x.props.labelsHideCovered) {
               // Gestisco caso labelsHideCovered con labelsAnchor != 'start'
-              lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (opt.labelsCenter ? deltaBarX : deltaX);
+              lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (labelsCenter ? deltaBarX : deltaX);
               if (lw > 0) {
-                j = i + Math.ceil(lw / (opt.labelsCenter ? deltaBarX : deltaX));
+                j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
                 for (; i < j && i + 1 < labels.length; i++)
                   labels[i + 1] = false;
               }
@@ -332,7 +344,8 @@ $.elycharts.line = {
             val = (axis[j].min + (i * ((axis[j].max - axis[j].min) / props.ny)));
             // Rounding with proper precision for "number sharpening"
             if (axis[j].normalizationBase)
-              val = Math.round(val / axis[j].normalizationBase) * axis[j].normalizationBase;
+              // I use (1 / ( 1 / norm ) ) to avoid some noise
+              val = Math.round(val / axis[j].normalizationBase) / ( 1 / axis[j].normalizationBase );
 
             if (axis[j].props.labelsFormatHandler)
               val = axis[j].props.labelsFormatHandler(val);
@@ -362,7 +375,7 @@ $.elycharts.line = {
       // Grid
       if (props.nx || props.ny) {
         var path = [], t,
-          nx = props.nx == 'auto' ? (opt.labelsCenter ? labels.length : labels.length - 1) : props.nx,
+          nx = props.nx == 'auto' ? (labelsCenter ? labels.length : labels.length - 1) : props.nx,
           ny = props.ny,
           rowHeight = (opt.height - opt.margins[2] - opt.margins[0]) / ny,
           columnWidth = (opt.width - opt.margins[1] - opt.margins[3]) / nx,
