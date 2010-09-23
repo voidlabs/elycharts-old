@@ -909,7 +909,9 @@ $.elycharts.common = {
     for (var i = 0; i < path2.length; i++)
       path.push( !i ? [ "L", path2[0][1], path2[0][2] ] : path2[i] );
     
-    path.push(['z']);
+    if (path.length)
+      path.push(['z']);
+
     return path;
   },
   
@@ -1075,18 +1077,26 @@ $.elycharts.common = {
    */
   getSVGProps : function(path, prevprops) {
     var props = prevprops ? prevprops : {};
+    var type = 'path', value;
+
     if (path.length == 1 && path[0][0] == 'RECT')
-      props['path'] = common.absrectpath(path[0][1], path[0][2], path[0][3], path[0][4], path[0][5]);
-    else if (path.length == 1 && path[0][0] == 'SLICE')
-      props['slice'] = [ path[0][1], path[0][2], path[0][3], path[0][4], path[0][5], path[0][6] ];
-    else if (path.length == 1 && path[0][0] == 'LINE')
-      props['path'] = common.linepath( path[0][1], path[0][2] );
+      value = common.absrectpath(path[0][1], path[0][2], path[0][3], path[0][4], path[0][5]);
+    else if (path.length == 1 && path[0][0] == 'SLICE') {
+      type = 'slice';
+      value = [ path[0][1], path[0][2], path[0][3], path[0][4], path[0][5], path[0][6] ];
+    } else if (path.length == 1 && path[0][0] == 'LINE')
+      value = common.linepath( path[0][1], path[0][2] );
     else if (path.length == 1 && path[0][0] == 'LINEAREA')
-      props['path'] = common.lineareapath( path[0][1], path[0][2], path[0][3] );
+      value = common.lineareapath( path[0][1], path[0][2], path[0][3] );
     else if (path.length == 1 && (path[0][0] == 'CIRCLE' || path[0][0] == 'TEXT' || path[0][0] == 'DOMELEMENT' || path[0][0] == 'RELEMENT'))
-      return false;
+      return prevprops ? prevprops : false;
     else
-      props['path'] = path;
+      value = path;
+
+    if (type != 'path' || (value && value.length > 0))
+      props[type] = value;
+    else if (!prevprops)
+      return false;
     return props;
   },
   
@@ -1104,7 +1114,15 @@ $.elycharts.common = {
     if (path.length == 1 && path[0][0] == 'TEXT')
       return paper.text(path[0][2], path[0][3], path[0][1]);
     var props = this.getSVGProps(path);
-    return props ? paper.path().attr(props) : false;
+
+    // Props must be with some data in it
+    var hasdata = false;
+    for (var k in props) {
+      hasdata = true;
+      break;
+    }
+
+    return props && hasdata ? paper.path().attr(props) : false;
   },
   
   /**
@@ -3324,7 +3342,7 @@ $.elycharts.line = {
     var deltaBarX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 0 ? labels.length : 1);
 
     for (serie in values) {
-      var data = values[serie];
+      //var data = values[serie];
       props = common.areaProps(env, 'Series', serie);
       plot = plots[serie];
 
@@ -3342,24 +3360,25 @@ $.elycharts.line = {
           var fillPath = [ 'LINEAREA', [], [], props.rounded ];
           var dotPieces = [];
           
-          for (i = 0, ii = labels.length; i < ii; i++) {
-            var indexProps = common.areaProps(env, 'Series', serie, i);
-            
-            var d = plot.to[i] > plot.max ? plot.max : (plot.to[i] < plot.min ? plot.min : plot.to[i]);
-            var x = Math.round((props.lineCenter ? deltaBarX / 2 : 0) + opt.margins[3] + i * (props.lineCenter ? deltaBarX : deltaX));
-            var y = Math.round(opt.height - opt.margins[2] - deltaY * (d - plot.min));
-            var dd = plot.from[i] > plot.max ? plot.max : (plot.from[i] < plot.min ? plot.min : plot.from[i]);
-            var yy = Math.round(opt.height - opt.margins[2] - deltaY * (dd - plot.min)) + ($.browser.msie ? 1 : 0);
-            
-            linePath[1].push([x, y]);
-            
-            if (props.fill) {
-              fillPath[1].push([x, y]);
-              fillPath[2].push([x, yy]);
+          for (i = 0, ii = labels.length; i < ii; i++)
+            if (plot.to.length > i) {
+              var indexProps = common.areaProps(env, 'Series', serie, i);
+
+              var d = plot.to[i] > plot.max ? plot.max : (plot.to[i] < plot.min ? plot.min : plot.to[i]);
+              var x = Math.round((props.lineCenter ? deltaBarX / 2 : 0) + opt.margins[3] + i * (props.lineCenter ? deltaBarX : deltaX));
+              var y = Math.round(opt.height - opt.margins[2] - deltaY * (d - plot.min));
+              var dd = plot.from[i] > plot.max ? plot.max : (plot.from[i] < plot.min ? plot.min : plot.from[i]);
+              var yy = Math.round(opt.height - opt.margins[2] - deltaY * (dd - plot.min)) + ($.browser.msie ? 1 : 0);
+
+              linePath[1].push([x, y]);
+
+              if (props.fill) {
+                fillPath[1].push([x, y]);
+                fillPath[2].push([x, yy]);
+              }
+              if (indexProps.dot)
+                dotPieces.push({path : [ [ 'CIRCLE', x, y, indexProps.dotProps.size ] ], attr : indexProps.dotProps}); // TODO Size e' in mezzo ad attrs
             }
-            if (indexProps.dot)
-              dotPieces.push({path : [ [ 'CIRCLE', x, y, indexProps.dotProps.size ] ], attr : indexProps.dotProps}); // TODO Size e' in mezzo ad attrs
-          }
 
           if (props.fill)
             pieces.push({ section : 'Series', serie : serie, subSection : 'Fill', path : [ fillPath ], attr : props.fillProps });
@@ -3377,20 +3396,21 @@ $.elycharts.line = {
           pieceBar = [];
           
           // BAR CHART
-          for (i = 0, ii = labels.length; i < ii; i++) {
-            if (plot.from[i] != plot.to[i]) {
-              var bwid = Math.floor((deltaBarX - opt.barMargins) / env.barno);
-              var bpad = bwid * (100 - props.barWidthPerc) / 200;
-              var boff = opt.barMargins / 2 + plot.barno * bwid;
-              
-              var x1 = Math.floor(opt.margins[3] + i * deltaBarX + boff + bpad);
-              var y1 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.to[i] - plot.min));
-              var y2 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.from[i] - plot.min));
+          for (i = 0, ii = labels.length; i < ii; i++)
+            if (plot.to.length > i) {
+              if (plot.from[i] != plot.to[i]) {
+                var bwid = Math.floor((deltaBarX - opt.barMargins) / env.barno);
+                var bpad = bwid * (100 - props.barWidthPerc) / 200;
+                var boff = opt.barMargins / 2 + plot.barno * bwid;
 
-              pieceBar.push({path : [ [ 'RECT', x1, y1, x1 + bwid - bpad * 2, y2 ] ], attr : props.plotProps });
-            } else
-              pieceBar.push({path : false, attr : false });
-          }
+                var x1 = Math.floor(opt.margins[3] + i * deltaBarX + boff + bpad);
+                var y1 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.to[i] - plot.min));
+                var y2 = Math.round(opt.height - opt.margins[2] - deltaY * (plot.from[i] - plot.min));
+
+                pieceBar.push({path : [ [ 'RECT', x1, y1, x1 + bwid - bpad * 2, y2 ] ], attr : props.plotProps });
+              } else
+                pieceBar.push({path : false, attr : false });
+            }
           
           if (pieceBar.length)
             pieces.push({ section : 'Series', serie : serie, subSection : 'Plot', paths: pieceBar, mousearea : 'paths' });
@@ -3414,6 +3434,7 @@ $.elycharts.line = {
   }, 
   
   grid : function(env, pieces) {
+
     // DEP: axis, [=> series, values], labels, margins, width, height, grid*
     if (common.executeIfChanged(env, ['values', 'series', 'axis', 'labels', 'margins', 'width', 'height', 'features.grid'])) {
       var opt = env.opt;
@@ -3521,6 +3542,7 @@ $.elycharts.line = {
           pieces.push({ section : 'Axis', serie : j, subSection : 'Label', paths : paths });
         } else
           pieces.push({ section : 'Axis', serie : j, subSection : 'Label', paths : [] });
+
         if (axis[j] && axis[j].props.title) {
           if (j == 'r')
             x = opt.width - opt.margins[1] + axis[j].props.titleDistance * ($.browser.msie ? axis[j].props.titleDistanceIE : 1);
@@ -3539,8 +3561,8 @@ $.elycharts.line = {
         var path = [], t,
           nx = props.nx == 'auto' ? (labelsCenter ? labels.length : labels.length - 1) : props.nx,
           ny = props.ny,
-          rowHeight = (opt.height - opt.margins[2] - opt.margins[0]) / ny,
-          columnWidth = (opt.width - opt.margins[1] - opt.margins[3]) / nx,
+          rowHeight = (opt.height - opt.margins[2] - opt.margins[0]) / (ny ? ny : 1),
+          columnWidth = (opt.width - opt.margins[1] - opt.margins[3]) / (nx ? nx : 1),
           forceBorderX1 = typeof props.forceBorder == 'object' ? props.forceBorder[3] : props.forceBorder,
           forceBorderX2 = typeof props.forceBorder == 'object' ? props.forceBorder[1] : props.forceBorder,
           forceBorderY1 = typeof props.forceBorder == 'object' ? props.forceBorder[0] : props.forceBorder,

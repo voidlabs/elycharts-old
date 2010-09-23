@@ -482,7 +482,9 @@ $.elycharts.common = {
     for (var i = 0; i < path2.length; i++)
       path.push( !i ? [ "L", path2[0][1], path2[0][2] ] : path2[i] );
     
-    path.push(['z']);
+    if (path.length)
+      path.push(['z']);
+
     return path;
   },
   
@@ -648,18 +650,26 @@ $.elycharts.common = {
    */
   getSVGProps : function(path, prevprops) {
     var props = prevprops ? prevprops : {};
+    var type = 'path', value;
+
     if (path.length == 1 && path[0][0] == 'RECT')
-      props['path'] = common.absrectpath(path[0][1], path[0][2], path[0][3], path[0][4], path[0][5]);
-    else if (path.length == 1 && path[0][0] == 'SLICE')
-      props['slice'] = [ path[0][1], path[0][2], path[0][3], path[0][4], path[0][5], path[0][6] ];
-    else if (path.length == 1 && path[0][0] == 'LINE')
-      props['path'] = common.linepath( path[0][1], path[0][2] );
+      value = common.absrectpath(path[0][1], path[0][2], path[0][3], path[0][4], path[0][5]);
+    else if (path.length == 1 && path[0][0] == 'SLICE') {
+      type = 'slice';
+      value = [ path[0][1], path[0][2], path[0][3], path[0][4], path[0][5], path[0][6] ];
+    } else if (path.length == 1 && path[0][0] == 'LINE')
+      value = common.linepath( path[0][1], path[0][2] );
     else if (path.length == 1 && path[0][0] == 'LINEAREA')
-      props['path'] = common.lineareapath( path[0][1], path[0][2], path[0][3] );
+      value = common.lineareapath( path[0][1], path[0][2], path[0][3] );
     else if (path.length == 1 && (path[0][0] == 'CIRCLE' || path[0][0] == 'TEXT' || path[0][0] == 'DOMELEMENT' || path[0][0] == 'RELEMENT'))
-      return false;
+      return prevprops ? prevprops : false;
     else
-      props['path'] = path;
+      value = path;
+
+    if (type != 'path' || (value && value.length > 0))
+      props[type] = value;
+    else if (!prevprops)
+      return false;
     return props;
   },
   
@@ -677,7 +687,15 @@ $.elycharts.common = {
     if (path.length == 1 && path[0][0] == 'TEXT')
       return paper.text(path[0][2], path[0][3], path[0][1]);
     var props = this.getSVGProps(path);
-    return props ? paper.path().attr(props) : false;
+
+    // Props must be with some data in it
+    var hasdata = false;
+    for (var k in props) {
+      hasdata = true;
+      break;
+    }
+
+    return props && hasdata ? paper.path().attr(props) : false;
   },
   
   /**

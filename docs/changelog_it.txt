@@ -3,6 +3,7 @@ v2.1.2
 - migliorie nella fase di visualizzazione degli oggetti
 - supporto per nuova proprietà "zindex" (da specificare in qualunque props SVG)
 - lo zindex di default per i "dots" nel grafico a linee è 5 (per mostrare i punti sopra gli altri oggetti)
+- fix line chart e problemi con serie di un solo valore [#6]
 - cleanup codice
 
 v2.1.1
