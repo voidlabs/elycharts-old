@@ -90,8 +90,8 @@ function _initEnv($container, $options) {
 }
 
 /**
- * Normalizza le opzioni passate
- * - Effettua le modifiche per compatibilità all'indietro
+ * Normalize options passed (primarly for backward compatibility)
+ * -
  */
 function _normalizeOptions($options) {
   if ($options.type == 'pie' || $options.type == 'funnel') {
@@ -224,7 +224,7 @@ $.elycharts.common = {
       var flag = (a2 - a1) > 180;
       a1 = (a1 % 360) * Math.PI / 180;
       a2 = (a2 % 360) * Math.PI / 180;
-      // Se i due angoli risultano uguali ma inizialmente erano diversi significa che c'e' un giro intero (es: 0-360), che va rappresentato
+      // a1 == a2  (but they where different before) means that there is a complete round (eg: 0-360). This should be shown
       if (a1 == a2 && aa1 != aa2)
         a2 += 359.99 * Math.PI / 180;
       
@@ -467,55 +467,24 @@ $.elycharts.common = {
       if (anc)
         path.push([ "C", anc[0], anc[1], points[jj][0], points[jj][1], points[jj][0], points[jj][1] ]);
       
-      //path = this.linepathRevert(path);
-      
     } else {
-      //var last = false;
-      for (var i = 0; i < points.length; i++) {
+      for (var i = 0; i < points.length; i++)
         var x = points[i][0], y = points[i][1];
-        //if (!rounded || !last)
           path.push([i == 0 ? "M" : "L", x, y]);
-        //else
-        //  path.push(["C", last[0] + rounded, last[1], x - rounded, y, x, y]);
-        //last = [x, y];
-      }
     }
     
     return path;
   },
 
-  lineareapath : function ( points1, points2, rounded ) {
-    var path = this.linepath( points1, rounded), path2 = this.linepathRevert(this.linepath( points2, rounded));
+  lineareapath : function (points1, points2, rounded) {
+    var path = this.linepath(points1, rounded), path2 = this.linepathRevert(this.linepath(points2, rounded));
     
     for (var i = 0; i < path2.length; i++)
       path.push( !i ? [ "L", path2[0][1], path2[0][2] ] : path2[i] );
     
     path.push(['z']);
     return path;
-       
-    /*
-    //var last = false;
-    for (var i = 0; i < points1.length; i++) {
-      var x = points1[i][0], y = points1[i][1];
-      //if (!rounded || !last)
-        path.push([i == 0 ? "M" : "L", x, y]);
-      //else
-      //  path.push(["C", last[0] + rounded, last[1], x - rounded, y, x, y]);
-      //last = [x, y];
-    }
-    //last = false;
-    for (i = points2.length - 1; i >= 0; i--) {
-      var x = points2[i][0], y = points2[i][1];
-      //if (!rounded || !last)
-        path.push(["L", x, y]);
-      //else
-      //  path.push(["C", last[0] - rounded, last[1], x + rounded, y, x, y]);
-      //last = [x, y];
-    }
-    path.push(['z']);
-    return path;*/
   },
-  
   
   /**
    * Prende la coordinata X di un passo di un path
@@ -675,21 +644,6 @@ $.elycharts.common = {
   },
 
   /**
-   * Ritorna il path SVG dato il path non SVG passato (se applicabile, per CIRCLE e TEXT non lo e')
-   */
-  /*
-  getSVGPath : function(path) {
-    if (path.length == 1 && path[0][0] == 'RECT')
-      return common.absrectpath(path[0][1], path[0][2], path[0][3], path[0][4], path[0][5]);
-    //if (path.length == 1 && path[0][0] == 'SLICE')
-    //  return common.slicePath(path[0][1], path[0][2], path[0][3], path[0][4], path[0][5], path[0][6]);
-    if (path.length == 1 && (path[0][0] == 'SLICE' || path[0][0] == 'CIRCLE' || path[0][0] == 'TEXT' || path[0][0] == 'DOMELEMENT' || path[0][0] == 'RELEMENT'))
-      return false;
-    return path;
-  },
-  */
-
-  /**
    * Ritorna le proprieta SVG da impostare per visualizzare il path non SVG passato (se applicabile, per CIRCLE e TEXT non lo e')
    */
   getSVGProps : function(path, prevprops) {
@@ -699,10 +653,8 @@ $.elycharts.common = {
     else if (path.length == 1 && path[0][0] == 'SLICE')
       props['slice'] = [ path[0][1], path[0][2], path[0][3], path[0][4], path[0][5], path[0][6] ];
     else if (path.length == 1 && path[0][0] == 'LINE')
-      //props['line'] = [ path[0][1], path[0][2] ];
       props['path'] = common.linepath( path[0][1], path[0][2] );
     else if (path.length == 1 && path[0][0] == 'LINEAREA')
-      //props['linearea'] = [ path[0][1], path[0][2], path[0][3] ];
       props['path'] = common.lineareapath( path[0][1], path[0][2], path[0][3] );
     else if (path.length == 1 && (path[0][0] == 'CIRCLE' || path[0][0] == 'TEXT' || path[0][0] == 'DOMELEMENT' || path[0][0] == 'RELEMENT'))
       return false;
@@ -766,145 +718,125 @@ $.elycharts.common = {
     return piece.fullattr;
   },
 
-  /**
-   * Disegna l'array di pieces passato (considerando le animazioni)
-   */
+
   show : function(env, pieces) {
+    pieces = this.getSortedPathData(pieces);
+
     common.animationStackStart(env);
-    
-    if ($.isPlainObject(pieces))
-      for (var section in pieces)
-        this.show(env, pieces[section]);
-        
-    else {
-      for (var i = 0; i < pieces.length; i++) {
-        var piece = pieces[i];
-        
-        if (typeof piece.show == 'undefined' || piece.show) {
-          if (piece.paths) {
-            this.show(env, piece.paths);
 
-          } else {
-            //var animationAttr = piece.animation ? piece.attr : false;
-            piece.element = piece.animation && piece.animation.element ? piece.animation.element : false;
-            piece.hide = false;
-            
-            if (!piece.path) {
-              // Elemento da non mostrare / nascondere: non deve fare nulla
-              piece.hide = true;
-            }
-            /*else if (piece.path.length == 1 && piece.path[0][0] == 'CIRCLE') {
-              // CIRCLE
-              if (!piece.element) {
-                if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
-                  piece.element = this.showPath(env, piece.animation.startPath);
-                else
-                  piece.element = this.showPath(env, piece.path);
-              }
+    var previousElement = false;
+    for (var i = 0; i < pieces.length; i++) {
+      var piece = pieces[i];
 
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'RECT') {
-              // RECT
-              if (!piece.element) {
-                if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
-                  piece.element = this.showPath(env, piece.animation.startPath);
-                else
-                  piece.element = this.showPath(env, piece.path)
-              }
-              
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'SLICE') {
-              // SLICE
-              if (!piece.element) {
-                if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
-                  piece.element = this.showPath(env, piece.animation.startPath);
-                else
-                  piece.element = this.showPath(env, piece.path)
-              }
+      if (typeof piece.show == 'undefined' || piece.show) {
+        // If there is piece.animation.element, this is the old element that must be transformed to the new one
+        piece.element = piece.animation && piece.animation.element ? piece.animation.element : false;
+        piece.hide = false;
 
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'LINE') {
-              // LINE
-              if (!piece.element) {
-                if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
-                  piece.element = this.showPath(env, piece.animation.startPath);
-                else
-                  piece.element = this.showPath(env, piece.path)
-              }
+        if (!piece.path) {
+          // Element should not be shown or must be hidden: nothing to prepare
+          piece.hide = true;
 
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'LINEAREA') {
-              // LINEAREA
-              if (!piece.element) {
-                if (piece.animation && piece.animation.startPath && piece.animation.startPath.length) {
-                  piece.element = this.showPath(env, piece.animation.startPath);
-                } else
-                  piece.element = this.showPath(env, piece.path)
-              }
+        } else if (piece.path.length == 1 && piece.path[0][0] == 'TEXT') {
+          // TEXT
+          // Animation is not supported, so if there's an old element i must hide it (with force = true to hide it for sure, even if there's a new version of same element)
+          if (piece.element) {
+            common.animationStackPush(env, piece, piece.element, false, piece.animation.speed, piece.animation.easing, piece.animation.delay, true);
+            piece.animation.element = false;
+          }
+          piece.element = this.showPath(env, piece.path);
+          // If this is a transition i must position new element
+          if (env.newopt && previousElement)
+            piece.element.insertAfter(previousElement);
 
-            } */ else if (piece.path.length == 1 && piece.path[0][0] == 'TEXT') {
-              // TEXT
-              
-              // L'animazione da un relement all'altro non e' supportata, quindi se c'e' un vecchio elemento lo nascondo (con force = true, altrimenti rischio di non farlo visto che nel frattempo c'e' la view della nuova versione dello stesso elemento)
-              if (piece.element) {
-                common.animationStackPush(env, piece, piece.element, false, piece.animation.speed, piece.animation.easing, piece.animation.delay, true);
-                piece.animation.element = false;
-              }
+        } else if (piece.path.length == 1 && piece.path[0][0] == 'DOMELEMENT') {
+          // DOMELEMENT
+          // Already shown
+          // Animation not supported
+
+        } else if (piece.path.length == 1 && piece.path[0][0] == 'RELEMENT') {
+          // RAPHAEL ELEMENT
+          // Already shown
+          // Animation is not supported, so if there's an old element i must hide it (with force = true to hide it for sure, even if there's a new version of same element)
+          if (piece.element) {
+            common.animationStackPush(env, piece, piece.element, false, piece.animation.speed, piece.animation.easing, piece.animation.delay, true);
+            piece.animation.element = false;
+          }
+
+          piece.element = piece.path[0][1];
+          if (previousElement)
+            piece.element.insertAfter(previousElement);
+          piece.attr = false;
+
+        } else {
+          // OTHERS
+          if (!piece.element) {
+            if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
+              piece.element = this.showPath(env, piece.animation.startPath);
+            else
               piece.element = this.showPath(env, piece.path);
 
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'DOMELEMENT') {
-              // DOMELEMENT
-              // Gia' mostrato, non deve fare nulla
-              
-              // Animazione non gestibile
-              
-            } else if (piece.path.length == 1 && piece.path[0][0] == 'RELEMENT') {
-              // RAPHAEL ELEMENT
-              // Gia' mostrato
-              
-              // L'animazione da un relement all'altro non e' supportata, quindi se c'e' un vecchio elemento lo nascondo (con force = true, altrimenti rischio di non farlo visto che nel frattempo c'e' la view della nuova versione dello stesso elemento)
-              if (piece.element) {
-                common.animationStackPush(env, piece, piece.element, false, piece.animation.speed, piece.animation.easing, piece.animation.delay, true);
-                piece.animation.element = false;
-              }
-              
-              piece.element = piece.path[0][1];
-              piece.attr = false;
-              
-            } else {
-              // LINE
-              if (!piece.element) {
-                if (piece.animation && piece.animation.startPath && piece.animation.startPath.length)
-                  piece.element = this.showPath(env, piece.animation.startPath);
-                else
-                  piece.element = this.showPath(env, piece.path);
-              }
-            }
-            
-            if (piece.element) {
-              if (piece.attr) {
-                if (!piece.animation) {
-                  if (typeof piece.attr.opacity == 'undefined')
-                    piece.attr.opacity = 1;
-                  piece.element.attr(piece.attr);
-
-                } else {
-                  if (!piece.animation.element)
-                    piece.element.attr(piece.animation.startAttr ? piece.animation.startAttr : piece.attr);
-                  //if (typeof animationAttr.opacity == 'undefined')
-                  //  animationAttr.opacity = 1;
-                  //common.animationStackPush(env, piece, piece.element, common._clone(animationAttr), piece.animation.speed, piece.animation.easing, piece.animation.delay);
-                  common.animationStackPush(env, piece, piece.element, this.getPieceFullAttr(env, piece), piece.animation.speed, piece.animation.easing, piece.animation.delay);
-                }
-              } else if (piece.hide) {
-                // Nasconde
-                common.animationStackPush(env, piece, piece.element, false, piece.animation.speed, piece.animation.easing, piece.animation.delay);
-              }
-            }
+            // If this is a transition i must position new element
+            if (env.newopt && previousElement)
+              piece.element.insertAfter(previousElement);
           }
+        }
+
+        if (piece.element) {
+          if (piece.attr) {
+            if (!piece.animation) {
+              // Standard piece visualization
+              if (typeof piece.attr.opacity == 'undefined')
+                piece.attr.opacity = 1;
+              piece.element.attr(piece.attr);
+
+            } else {
+              // Piece animation
+              if (!piece.animation.element)
+                piece.element.attr(piece.animation.startAttr ? piece.animation.startAttr : piece.attr);
+              //if (typeof animationAttr.opacity == 'undefined')
+              //  animationAttr.opacity = 1;
+              common.animationStackPush(env, piece, piece.element, this.getPieceFullAttr(env, piece), piece.animation.speed, piece.animation.easing, piece.animation.delay);
+            }
+          } else if (piece.hide)
+            // Hide the piece
+            common.animationStackPush(env, piece, piece.element, false, piece.animation.speed, piece.animation.easing, piece.animation.delay);
+
+          previousElement = piece.element;
         }
       }
     }
-    
+
     common.animationStackEnd(env);
   },
-  
+
+  /**
+   * Given an array of pieces, return an array of single pathdata contained in pieces, sorted by zindex
+   */
+  getSortedPathData : function(pieces) {
+    res = [];
+
+    for (var i = 0; i < pieces.length; i++) {
+      var piece = pieces[i];
+      if (piece.paths) {
+        for (var j = 0; j < piece.paths.length; j++) {
+          piece.paths[j].pos = res.length;
+          piece.paths[j].parent = piece;
+          res.push(piece.paths[j]);
+        }
+      } else {
+        piece.pos = res.length;
+        piece.parent = false;
+        res.push(piece);
+      }
+    }
+    return res.sort(function (a, b) {
+      var za = typeof a.attr == 'undefined' || typeof a.attr.zindex == 'undefined' ? ( !a.parent || typeof a.parent.attr == 'undefined' || typeof a.parent.attr.zindex == 'undefined' ? 0 : a.parent.attr.zindex ) : a.attr.zindex;
+      var zb = typeof b.attr == 'undefined' || typeof b.attr.zindex == 'undefined' ? ( !b.parent || typeof b.parent.attr == 'undefined' || typeof b.parent.attr.zindex == 'undefined' ? 0 : b.parent.attr.zindex ) : b.attr.zindex;
+      return za < zb ? -1 : (za > zb ? 1 : (a.pos < b.pos ? -1 : (a.pos > b.pos ? 1 : 0)));
+    });
+  },
+
   animationStackStart : function(env) {
     if (!env.animationStackDepth || env.animationStackDepth == 0) {
       env.animationStackDepth = 0;

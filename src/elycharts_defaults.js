@@ -333,7 +333,7 @@ $.elycharts.templates = {
       fillProps : {stroke: "none", "stroke-width" : 0, "stroke-opacity": 0, opacity: .3},
 
       dot : true,
-      dotProps : {size: 4, stroke: "#000"},
+      dotProps : {size: 4, stroke: "#000", zindex: 5},
       
       startAnimation : {
         plotPropsFrom : false,

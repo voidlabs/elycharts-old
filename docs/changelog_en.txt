@@ -1,5 +1,9 @@
 v2.1.2
 - support for series.empty.tooltip e series.empty.label
+- refactoring object visualization phase
+- support for "zindex" property, to set the order of the object. It should be specified in every "*Props" settings, like a SVG Attr
+- default zIndex for dots in line chart is "5" (so dots are shown above other objects)
+- cleanup
 
 v2.1.1
 - REFACTORING: true modular management, code split in several components

@@ -4,7 +4,7 @@
 
 (function($) {
 
-var featuresmanager = $.elycharts.featuresmanager;
+//var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
 /***********************************************************************
@@ -40,7 +40,6 @@ $.elycharts.animationmanager = {
         animationProps = animationProps.stepAnimation;
       else
         animationProps = env.opt.features.animation.stepAnimation;
-      //console.warn(animationProps);
 
       // Se il piece attuale c'e' solo in pieces2 lo riporto nei nuovi, impostando come gia' mostrato
       // A meno che internal = true (siamo in un multipath, nel caso se una cosa non c'e' va considerata da togliere)
@@ -154,8 +153,6 @@ $.elycharts.animationmanager = {
         switch (piece.subSection) {
           case 'Plot':
             if (!piece.paths) {
-                //for (var i = 0; i < piece.path.length; i++)
-                //  piece.animation.startPath.push([i == 0 ? "M" : "L", piece.path[i][piece.path[i].length - 2], y]);
                 npath = [ 'LINE', [], piece.path[0][2]];
                 for (i = 0; i < piece.path[0][1].length; i++)
                   npath[1].push([ piece.path[0][1][i][0], y ]);
@@ -168,17 +165,6 @@ $.elycharts.animationmanager = {
             }
             break;
           case 'Fill':
-            /*
-            for (var i = 0; i < piece.path.length; i++)
-              switch (piece.path[i][0]) {
-                case 'M':
-                  piece.animation.startPath.push([ 'M', common.getX(piece.path[i]), y ]); break;
-                case 'z': case 'Z':
-                  piece.animation.startPath.push([ piece.path[i][0] ]); break;
-                default:
-                  piece.animation.startPath.push([ 'L', common.getX(piece.path[i]), y ]); break;
-              }
-            */
             npath = [ 'LINEAREA', [], [], piece.path[0][3]];
             for (i = 0; i < piece.path[0][1].length; i++) {
               npath[1].push([ piece.path[0][1][i][0], y ]);
@@ -249,13 +235,6 @@ $.elycharts.animationmanager = {
           case 'Plot':
             if (!piece.paths) {
               // LINE
-              /*
-              for (var i = 0; i < piece.path.length; i++)
-                avg += common.getY(piece.path[i]);
-              avg = avg / piece.path.length;
-              for (var i = 0; i < piece.path.length; i++)
-                piece.animation.startPath.push([i == 0 ? "M" : "L", common.getX(piece.path[i]), avg]);
-              */
               piece.animation.startPath.push([ 'LINE', this._animationAvgXYArray(piece.path[0][1]), piece.path[0][2] ]);
 
             } else {
@@ -274,19 +253,6 @@ $.elycharts.animationmanager = {
             break;
 
           case 'Fill':
-            /*
-            for (var i = 1; i < piece.path.length / 2; i++)
-              avg += common.getY(piece.path[i]);
-            avg = avg / (piece.path.length - 2) * 2;
-            for (var i = 0; i < piece.path.length / 2; i++)
-              piece.animation.startPath.push([i == 0 ? "M" : "L", common.getX(piece.path[i]), avg]);
-            avg = 0;
-            for (var i = piece.path.length / 2; i < piece.path.length - 1; i++)
-              avg += common.getY(piece.path[i]);
-            avg = avg / (piece.path.length - 2) * 2;
-            for (var i = piece.path.length / 2; i < piece.path.length; i++)
-              piece.animation.startPath.push(i == piece.path.length -1 ? 'z' : ["L", common.getX(piece.path[i]), avg]);
-            */
             piece.animation.startPath.push([ 'LINEAREA', this._animationAvgXYArray(piece.path[0][1]), this._animationAvgXYArray(piece.path[0][2]), piece.path[0][3] ]);
             
             break;
@@ -348,14 +314,6 @@ $.elycharts.animationmanager = {
           case 'Plot':
             if (!piece.paths) {
               // LINE
-              /*
-              var c = piece.path.length;
-              var y1 = common.getY(piece.path[0]);
-              var y2 = common.getY(piece.path[c - 1]);
-              
-              for (var i = 0; i < piece.path.length; i++)
-                piece.animation.startPath.push([i == 0 ? "M" : "L", common.getX(piece.path[i]), y1 + (y2 - y1) / (c - 1) * i]);
-              */
               piece.animation.startPath.push([ 'LINE', this._animationRegXYArray(piece.path[0][1]), piece.path[0][2] ]);
               
             } else {
@@ -375,18 +333,6 @@ $.elycharts.animationmanager = {
             break;
 
           case 'Fill':
-            /*
-            var c = (piece.path.length - 2) / 2;
-            var y1 = common.getY(piece.path[1]);
-            var y2 = common.getY(piece.path[c]);
-            for (var i = 0; i < piece.path.length / 2; i++)
-              piece.animation.startPath.push([i == 0 ? "M" : "L", common.getX(piece.path[i]), y1 + (y2 - y1) / (c - 1) * (i - 1)]);
-
-            y1 = common.getY(piece.path[piece.path.length - 2]);
-            y2 = common.getY(piece.path[c + 1]);
-            for (var i = piece.path.length / 2; i < piece.path.length; i++)
-              piece.animation.startPath.push(i == piece.path.length -1 ? 'z' : ["L", common.getX(piece.path[i]), y1 + (y2 - y1) / (c - 1) * (piece.path.length -2 -i)]);
-            */
             piece.animation.startPath.push([ 'LINEAREA', this._animationRegXYArray(piece.path[0][1]), this._animationRegXYArray(piece.path[0][2]), piece.path[0][3] ]);
             break;
 
