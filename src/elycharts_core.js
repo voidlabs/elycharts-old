@@ -408,10 +408,15 @@ $.elycharts.common = {
     b = p3y < p2y ? Math.PI - b : b;
     if (method == 2) {
       // If added by Bago to avoid curves beyond min or max
-      if (Math.abs(a - Math.PI / 2) < Math.abs(b - Math.PI / 2))
+      if ((a - Math.PI / 2) * (b - Math.PI / 2) > 0) {
+        a = 0;
+        b = 0;
+      } else {
+        if (Math.abs(a - Math.PI / 2) < Math.abs(b - Math.PI / 2))
           b = Math.PI - a;
-      else
-         a = Math.PI - b;
+        else
+          a = Math.PI - b;
+      }
     }
 
     var alpha = Math.PI / 2 - ((a + b) % (Math.PI * 2)) / 2,
@@ -764,7 +769,7 @@ $.elycharts.common = {
           }
           piece.element = this.showPath(env, piece.path);
           // If this is a transition i must position new element
-          if (env.newopt && previousElement)
+          if (piece.element && env.newopt && previousElement)
             piece.element.insertAfter(previousElement);
 
         } else if (piece.path.length == 1 && piece.path[0][0] == 'DOMELEMENT') {
@@ -782,7 +787,7 @@ $.elycharts.common = {
           }
 
           piece.element = piece.path[0][1];
-          if (previousElement)
+          if (piece.element && previousElement)
             piece.element.insertAfter(previousElement);
           piece.attr = false;
 
@@ -795,7 +800,7 @@ $.elycharts.common = {
               piece.element = this.showPath(env, piece.path);
 
             // If this is a transition i must position new element
-            if (env.newopt && previousElement)
+            if (piece.element && env.newopt && previousElement)
               piece.element.insertAfter(previousElement);
           }
         }
