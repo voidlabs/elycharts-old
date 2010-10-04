@@ -5,6 +5,7 @@ v2.1.2
 - default zIndex for dots in line chart is "5" (so dots are shown above other objects)
 - fix #6: Using a simple line chart with a single serie and a single value in that serie breaks elychart.
 - cleanup
+- fix transitions
 
 v2.1.1
 - REFACTORING: true modular management, code split in several components

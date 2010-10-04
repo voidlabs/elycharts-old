@@ -1,5 +1,9 @@
 /*!*********************************************************************
  * ELYCHARTS v2.1.2
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {

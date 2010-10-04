@@ -1,5 +1,9 @@
 /*!*********************************************************************
  * ELYCHARTS v2.1.2
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -425,8 +429,12 @@ $.elycharts.templates = {
 }
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -835,10 +843,15 @@ $.elycharts.common = {
     b = p3y < p2y ? Math.PI - b : b;
     if (method == 2) {
       // If added by Bago to avoid curves beyond min or max
-      if (Math.abs(a - Math.PI / 2) < Math.abs(b - Math.PI / 2))
+      if ((a - Math.PI / 2) * (b - Math.PI / 2) > 0) {
+        a = 0;
+        b = 0;
+      } else {
+        if (Math.abs(a - Math.PI / 2) < Math.abs(b - Math.PI / 2))
           b = Math.PI - a;
-      else
-         a = Math.PI - b;
+        else
+          a = Math.PI - b;
+      }
     }
 
     var alpha = Math.PI / 2 - ((a + b) % (Math.PI * 2)) / 2,
@@ -1191,7 +1204,7 @@ $.elycharts.common = {
           }
           piece.element = this.showPath(env, piece.path);
           // If this is a transition i must position new element
-          if (env.newopt && previousElement)
+          if (piece.element && env.newopt && previousElement)
             piece.element.insertAfter(previousElement);
 
         } else if (piece.path.length == 1 && piece.path[0][0] == 'DOMELEMENT') {
@@ -1209,7 +1222,7 @@ $.elycharts.common = {
           }
 
           piece.element = piece.path[0][1];
-          if (previousElement)
+          if (piece.element && previousElement)
             piece.element.insertAfter(previousElement);
           piece.attr = false;
 
@@ -1222,7 +1235,7 @@ $.elycharts.common = {
               piece.element = this.showPath(env, piece.path);
 
             // If this is a transition i must position new element
-            if (env.newopt && previousElement)
+            if (piece.element && env.newopt && previousElement)
               piece.element.insertAfter(previousElement);
           }
         }
@@ -1517,8 +1530,12 @@ TODO
 * ripristinare shadow
 
 *********************************************/
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -1623,8 +1640,12 @@ $.elycharts.anchormanager = {
 $.elycharts.featuresmanager.register($.elycharts.anchormanager, 30);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -2014,8 +2035,12 @@ $.elycharts.frameanimationmanager = {
 $.elycharts.featuresmanager.register($.elycharts.frameanimationmanager, 90);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -2088,8 +2113,12 @@ $.elycharts.balloonmanager = {
 $.elycharts.featuresmanager.register($.elycharts.balloonmanager, 30);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -2285,8 +2314,12 @@ $.elycharts.highlightmanager = {
 $.elycharts.featuresmanager.register($.elycharts.highlightmanager, 21);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -2414,13 +2447,17 @@ $.elycharts.labelmanager = {
 $.elycharts.featuresmanager.register($.elycharts.labelmanager, 5);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
 
-var featuresmanager = $.elycharts.featuresmanager;
+//var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
 /***********************************************************************
@@ -2536,8 +2573,12 @@ $.elycharts.legendmanager = {
 $.elycharts.featuresmanager.register($.elycharts.legendmanager, 90);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -2743,14 +2784,18 @@ $.elycharts.mousemanager = {
 $.elycharts.featuresmanager.register($.elycharts.mousemanager, 0);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
 
-var featuresmanager = $.elycharts.featuresmanager;
-var common = $.elycharts.common;
+//var featuresmanager = $.elycharts.featuresmanager;
+//var common = $.elycharts.common;
 
 /***********************************************************************
  * FEATURE: SHADOW
@@ -2793,8 +2838,12 @@ $.elycharts.shadowmanager = {
 $.elycharts.featuresmanager.register($.elycharts.shadowmanager, 5);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -2972,8 +3021,12 @@ $.elycharts.tooltipmanager = {
 $.elycharts.featuresmanager.register($.elycharts.tooltipmanager, 20);
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -3054,8 +3107,12 @@ $.elycharts.barline = {
 };
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -3178,8 +3235,12 @@ $.elycharts.funnel = {
 };
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {
@@ -3617,8 +3678,12 @@ $.elycharts.line = {
 }
 
 })(jQuery);
-/***********************************************************************
- * ELYCHARTS v2.1.1
+/*!*********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
  **********************************************************************/
 
 (function($) {

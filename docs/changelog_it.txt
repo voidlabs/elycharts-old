@@ -5,6 +5,7 @@ v2.1.2
 - lo zindex di default per i "dots" nel grafico a linee è 5 (per mostrare i punti sopra gli altri oggetti)
 - fix line chart e problemi con serie di un solo valore [#6]
 - cleanup codice
+- fix transizioni
 
 v2.1.1
 - REFACTORING per gestione modulare effettiva, split del codice nei vari componenti
