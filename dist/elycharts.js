@@ -429,7 +429,7 @@ $.elycharts.templates = {
 }
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -1530,7 +1530,7 @@ TODO
 * ripristinare shadow
 
 *********************************************/
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -1640,7 +1640,7 @@ $.elycharts.anchormanager = {
 $.elycharts.featuresmanager.register($.elycharts.anchormanager, 30);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2035,7 +2035,7 @@ $.elycharts.frameanimationmanager = {
 $.elycharts.featuresmanager.register($.elycharts.frameanimationmanager, 90);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2113,7 +2113,7 @@ $.elycharts.balloonmanager = {
 $.elycharts.featuresmanager.register($.elycharts.balloonmanager, 30);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2314,7 +2314,7 @@ $.elycharts.highlightmanager = {
 $.elycharts.featuresmanager.register($.elycharts.highlightmanager, 21);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2447,7 +2447,7 @@ $.elycharts.labelmanager = {
 $.elycharts.featuresmanager.register($.elycharts.labelmanager, 5);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2573,7 +2573,7 @@ $.elycharts.legendmanager = {
 $.elycharts.featuresmanager.register($.elycharts.legendmanager, 90);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2784,7 +2784,7 @@ $.elycharts.mousemanager = {
 $.elycharts.featuresmanager.register($.elycharts.mousemanager, 0);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -2838,7 +2838,7 @@ $.elycharts.shadowmanager = {
 $.elycharts.featuresmanager.register($.elycharts.shadowmanager, 5);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -3021,7 +3021,7 @@ $.elycharts.tooltipmanager = {
 $.elycharts.featuresmanager.register($.elycharts.tooltipmanager, 20);
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -3107,7 +3107,7 @@ $.elycharts.barline = {
 };
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -3235,7 +3235,7 @@ $.elycharts.funnel = {
 };
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
@@ -3678,7 +3678,7 @@ $.elycharts.line = {
 }
 
 })(jQuery);
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *

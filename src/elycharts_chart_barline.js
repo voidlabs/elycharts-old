@@ -1,4 +1,4 @@
-/*!*********************************************************************
+/**********************************************************************
  * ELYCHARTS
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
