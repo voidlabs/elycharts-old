@@ -55,16 +55,19 @@ $.elycharts.mousemanager = {
             // path standard, generating an area for each point
             if (pieces[i].path.length >= 1 && (pieces[i].path[0][0] == 'LINE' || pieces[i].path[0][0] == 'LINEAREA'))
               for (j = 0; j < pieces[i].path[0][1].length; j++) {
-                env.mouseAreas.push({
-                  path : [ [ 'CIRCLE', pieces[i].path[0][1][j][0], pieces[i].path[0][1][j][1], 10 ] ],
-                  piece : pieces[i],
-                  pieces : pieces,
-                  index : j,
-                  props : common.areaProps(env, pieces[i].section, pieces[i].serie)
-                });
+                var props = common.areaProps(env, pieces[i].section, pieces[i].serie);
+                if (props.mouseareaShowOnNull || pieces[i].section != 'Series' || env.opt.values[pieces[i].serie][j] != null)
+                  env.mouseAreas.push({
+                    path : [ [ 'CIRCLE', pieces[i].path[0][1][j][0], pieces[i].path[0][1][j][1], 10 ] ],
+                    piece : pieces[i],
+                    pieces : pieces,
+                    index : j,
+                    props : props
+                  });
               }
               
             else // Code below is only for standard path - it should be useless now (now there are only LINE and LINEAREA)
+              // TODO DELETE
               for (j = 0; j < pieces[i].path.length; j++) {
                 env.mouseAreas.push({
                   path : [ [ 'CIRCLE', common.getX(pieces[i].path[j]), common.getY(pieces[i].path[j]), 10 ] ],

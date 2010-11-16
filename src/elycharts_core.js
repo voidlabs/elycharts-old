@@ -21,9 +21,24 @@ $.fn.chart = function($options) {
     return this;
   
   var $env = this.data('elycharts_env');
-  
-  if (!$env) {
+
+  if (typeof $options == "string") {
+    if ($options.toLowerCase() == "config")
+      return $env ? $env.opt : false;
+    if ($options.toLowerCase() == "clear") {
+      if ($env) {
+        // TODO Bisogna chiamare il destroy delle feature?
+        $env.paper.clear();
+        this.html("");
+        this.data('elycharts_env', false);
+      }
+    }
+  }
+  else if (!$env) {
     // First call, initialization
+
+    if ($options)
+      $options = _extendAndNormalizeOptions($options);
     
     if (!$options || !$options.type || !$.elycharts.templates[$options.type]) {
       alert('ElyCharts ERROR: chart type is not specified');
@@ -36,7 +51,7 @@ $.fn.chart = function($options) {
     this.data('elycharts_env', $env);
     
   } else {
-    $options = _normalizeOptions($options);
+    $options = _normalizeOptions($options, $env.opt);
     
     // Already initialized
     $env.oldopt = common._clone($env.opt);
@@ -49,7 +64,7 @@ $.fn.chart = function($options) {
   return this;
 }
 
-function _initEnv($container, $options) {
+function _extendAndNormalizeOptions($options) {
   var k;
   // Compatibility with old $.elysia_charts.default_options and $.elysia_charts.templates
   if ($.elysia_charts) {
@@ -62,42 +77,50 @@ function _initEnv($container, $options) {
   }
 
   // TODO Optimize extend cicle
-  if (!$options.template)
-    $options.template = $options.type;
-    
   while ($options.template) {
     var d = $options.template;
     delete $options.template;
     $options = $.extend(true, {}, $.elycharts.templates[d], $options);
   }
-  
-  $options = _normalizeOptions($options);
-  
+  if (!$options.template && $options.type) {
+    $options.template = $options.type;
+    while ($options.template) {
+      d = $options.template;
+      delete $options.template;
+      $options = $.extend(true, {}, $.elycharts.templates[d], $options);
+    }
+  }
+
+  return _normalizeOptions($options, $options);
+}
+
+function _initEnv($container, $options) {
   if (!$options.width)
     $options.width = $container.width();
   if (!$options.height)
     $options.height = $container.height();
     
-	var $env = {
+  var $env = {
     id : $.elycharts.lastId ++,
-		paper : common._RaphaelInstance($container.get()[0], $options.width, $options.height),
+    paper : common._RaphaelInstance($container.get()[0], $options.width, $options.height),
     container : $container,
-		plots : [],
-		opt : $options
-	};
+    plots : [],
+    opt : $options
+  };
+
   // Rendering a transparent pixel up-left. Thay way SVG area is well-covered (else the position starts at first real object, and that mess-ups everything)
   $env.paper.rect(0,0,1,1).attr({opacity: 0});
   
   $.elycharts[$options.type].init($env);
-	
-	return $env;
+
+  return $env;
 }
 
 /**
  * Normalize options passed (primarly for backward compatibility)
  * -
  */
-function _normalizeOptions($options) {
+function _normalizeOptions($options, $fullopt) {
   if ($options.type == 'pie' || $options.type == 'funnel') {
     if ($options.values && $.isArray($options.values) && !$.isArray($options.values[0]))
       $options.values = { root : $options.values };
@@ -112,7 +135,8 @@ function _normalizeOptions($options) {
   }
   
   if ($options.defaultSeries) {
-    _normalizeOptionsColor($options, $options.defaultSeries);
+    var deftype = $fullopt.type != 'line' ? $fullopt.type : ($options.defaultSeries.type ? $options.defaultSeries.type : ($fullopt.defaultSeries.type ? $fullopt.defaultSeries.type : 'line'));
+    _normalizeOptionsColor($options.defaultSeries, deftype);
     if ($options.defaultSeries.stackedWith) {
       $options.defaultSeries.stacked = $options.defaultSeries.stackedWith;
       delete $options.defaultSeries.stackedWith;
@@ -121,10 +145,11 @@ function _normalizeOptions($options) {
     
   if ($options.series)
     for (var serie in $options.series) {
-      _normalizeOptionsColor($options, $options.series[serie]);
+      var type = $fullopt.type != 'line' ? $fullopt.type : ($options.series[serie].type ? $options.series[serie].type : ($fullopt.series[serie].type ? $fullopt.series[serie].type : (deftype ? deftype : 'line')));
+      _normalizeOptionsColor($options.series[serie], type);
       if ($options.series[serie].values)
         for (var value in $options.series[serie].values)
-          _normalizeOptionsColor($options, $options.series[serie].values[value]);
+          _normalizeOptionsColor($options.series[serie].values[value], type);
       
       if ($options.series[serie].stackedWith) {
         $options.series[serie].stacked = $options.series[serie].stackedWith;
@@ -171,13 +196,19 @@ function _normalizeOptions($options) {
   return $options;
 }
 
-function _normalizeOptionsColor($options, $section) {
+/**
+* Manage "color" attribute.
+* @param $section Section part of external conf passed
+* @param $type Type of plot (for line chart can be "line" or "bar", for other types is equal to chart type)
+*/
+function _normalizeOptionsColor($section, $type) {
   if ($section.color) {
     var color = $section.color;
     
     if (!$section.plotProps)
       $section.plotProps = {};
-    if ($section.type == 'line' || ($options.type == 'line' && !$section.type)) {
+    
+    if ($type == 'line') {
       if ($section.plotProps && !$section.plotProps.stroke)
         $section.plotProps.stroke = color;
     } else {
@@ -199,7 +230,7 @@ function _normalizeOptionsColor($options, $section) {
     if ($section.legend.dotProps && !$section.legend.dotProps.fill)
       $section.legend.dotProps.fill = color;
       
-    if ($options.type == 'line' && ($section.type == 'line' || !$section.type)) {
+    if ($type == 'line') {
       if (!$section.dotProps)
         $section.dotProps = {};
       if ($section.dotProps && !$section.dotProps.fill)

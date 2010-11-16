@@ -1,5 +1,5 @@
 /*!*********************************************************************
- * ELYCHARTS v2.1.2
+ * ELYCHARTS v2.1.3
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
  * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
@@ -281,7 +281,7 @@ $.elycharts.templates = {
       // Imposta un testo da usare come prefisso e suffisso delle label
       //prefix : "", suffix : "",
       // Visualizza o meno le label dell'asse
-      labels: true, 
+      labels: false,
       // Distanza tra le label e l'asse relativo
       labelsDistance: 8, 
       // [solo asse x] Rotazione (in gradi) delle label. Se specificato ignora i valori di labelsAnchor e labelsProps['text-anchor']
@@ -336,8 +336,11 @@ $.elycharts.templates = {
       fill : false, 
       fillProps : {stroke: "none", "stroke-width" : 0, "stroke-opacity": 0, opacity: .3},
 
-      dot : true,
+      dot : false,
       dotProps : {size: 4, stroke: "#000", zindex: 5},
+      dotShowOnNull : false,
+
+      mouseareaShowOnNull : false,
       
       startAnimation : {
         plotPropsFrom : false,
@@ -352,16 +355,17 @@ $.elycharts.templates = {
     
     features : {
       grid : {
-        // N. di divisioni sull'asse X. Se "auto" si basa sulla label da visualizzare
+        // N. di divisioni sull'asse X. Se "auto" si basa sulla label da visualizzare. Se "0" imposta draw[vertical] = false
+        // Da notare che se "auto" allora la prima e l'ultima linea (bordi) le fa vedere sempre (se ci sono le label). Se invece e' un numero si comporta come ny: fa vedere i bordi solo se forzato con forceBorder
         nx : "auto",
-        // N. di divisione sull'asse Y
-        ny : 10,
+        // N. di divisione sull'asse Y. Se "0" imposta draw[horizontal] = false
+        ny : 4,
         // Disegna o meno la griglia. Si puo' specificare un array [horizontal, vertical]
-        draw : true,
+        draw : false,
         // Forza la visualizzazione dei bordi/assi. Se true disegna comunque i bordi (anche se draw = false o se non ci sono label), 
         // altrimenti si basa sulle regole standard di draw e presenza label (per asse x)
         // Puo' essere un booleano singolo o un array di bordi [up, dx, down, sx]
-        forceBorder : true, 
+        forceBorder : false,
         // Proprieta' di visualizzazione griglia
         props : {stroke: '#e0e0e0', "stroke-width": 1},
         // Dimensioni extra delle rette [up, dx, down, sx]
@@ -369,6 +373,13 @@ $.elycharts.templates = {
         // Indica se le label (e le rispettive linee del grid) vanno centrate sulle barre (true), quindi tra 2 linee, o sui punti della serie (false), quindi su una sola linea
         // Se specificato "auto" decide in autonomia
         labelsCenter : "auto",
+
+        // Display a rectangular region with properties specied for every even/odd vertical/horizontal grid division
+        evenVProps : false,
+        oddVProps : false,
+        evenHProps : false,
+        oddHProps : false,
+
         ticks : {
           // Attiva le barrette sugli assi [x, l, r]
           active : [false, false, false],
