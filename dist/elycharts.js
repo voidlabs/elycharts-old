@@ -1,5 +1,5 @@
 /*!*********************************************************************
- * ELYCHARTS v2.1.2
+ * ELYCHARTS v2.1.3
  * A Javascript library to generate interactive charts with vectorial graphics.
  *
  * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
@@ -281,7 +281,7 @@ $.elycharts.templates = {
       // Imposta un testo da usare come prefisso e suffisso delle label
       //prefix : "", suffix : "",
       // Visualizza o meno le label dell'asse
-      labels: true, 
+      labels: false,
       // Distanza tra le label e l'asse relativo
       labelsDistance: 8, 
       // [solo asse x] Rotazione (in gradi) delle label. Se specificato ignora i valori di labelsAnchor e labelsProps['text-anchor']
@@ -336,8 +336,11 @@ $.elycharts.templates = {
       fill : false, 
       fillProps : {stroke: "none", "stroke-width" : 0, "stroke-opacity": 0, opacity: .3},
 
-      dot : true,
+      dot : false,
       dotProps : {size: 4, stroke: "#000", zindex: 5},
+      dotShowOnNull : false,
+
+      mouseareaShowOnNull : false,
       
       startAnimation : {
         plotPropsFrom : false,
@@ -352,16 +355,17 @@ $.elycharts.templates = {
     
     features : {
       grid : {
-        // N. di divisioni sull'asse X. Se "auto" si basa sulla label da visualizzare
+        // N. di divisioni sull'asse X. Se "auto" si basa sulla label da visualizzare. Se "0" imposta draw[vertical] = false
+        // Da notare che se "auto" allora la prima e l'ultima linea (bordi) le fa vedere sempre (se ci sono le label). Se invece e' un numero si comporta come ny: fa vedere i bordi solo se forzato con forceBorder
         nx : "auto",
-        // N. di divisione sull'asse Y
-        ny : 10,
+        // N. di divisione sull'asse Y. Se "0" imposta draw[horizontal] = false
+        ny : 4,
         // Disegna o meno la griglia. Si puo' specificare un array [horizontal, vertical]
-        draw : true,
+        draw : false,
         // Forza la visualizzazione dei bordi/assi. Se true disegna comunque i bordi (anche se draw = false o se non ci sono label), 
         // altrimenti si basa sulle regole standard di draw e presenza label (per asse x)
         // Puo' essere un booleano singolo o un array di bordi [up, dx, down, sx]
-        forceBorder : true, 
+        forceBorder : false,
         // Proprieta' di visualizzazione griglia
         props : {stroke: '#e0e0e0', "stroke-width": 1},
         // Dimensioni extra delle rette [up, dx, down, sx]
@@ -369,6 +373,13 @@ $.elycharts.templates = {
         // Indica se le label (e le rispettive linee del grid) vanno centrate sulle barre (true), quindi tra 2 linee, o sui punti della serie (false), quindi su una sola linea
         // Se specificato "auto" decide in autonomia
         labelsCenter : "auto",
+
+        // Display a rectangular region with properties specied for every even/odd vertical/horizontal grid division
+        evenVProps : false,
+        oddVProps : false,
+        evenHProps : false,
+        oddHProps : false,
+
         ticks : {
           // Attiva le barrette sugli assi [x, l, r]
           active : [false, false, false],
@@ -452,9 +463,24 @@ $.fn.chart = function($options) {
     return this;
   
   var $env = this.data('elycharts_env');
-  
-  if (!$env) {
+
+  if (typeof $options == "string") {
+    if ($options.toLowerCase() == "config")
+      return $env ? $env.opt : false;
+    if ($options.toLowerCase() == "clear") {
+      if ($env) {
+        // TODO Bisogna chiamare il destroy delle feature?
+        $env.paper.clear();
+        this.html("");
+        this.data('elycharts_env', false);
+      }
+    }
+  }
+  else if (!$env) {
     // First call, initialization
+
+    if ($options)
+      $options = _extendAndNormalizeOptions($options);
     
     if (!$options || !$options.type || !$.elycharts.templates[$options.type]) {
       alert('ElyCharts ERROR: chart type is not specified');
@@ -467,7 +493,7 @@ $.fn.chart = function($options) {
     this.data('elycharts_env', $env);
     
   } else {
-    $options = _normalizeOptions($options);
+    $options = _normalizeOptions($options, $env.opt);
     
     // Already initialized
     $env.oldopt = common._clone($env.opt);
@@ -480,7 +506,7 @@ $.fn.chart = function($options) {
   return this;
 }
 
-function _initEnv($container, $options) {
+function _extendAndNormalizeOptions($options) {
   var k;
   // Compatibility with old $.elysia_charts.default_options and $.elysia_charts.templates
   if ($.elysia_charts) {
@@ -493,42 +519,50 @@ function _initEnv($container, $options) {
   }
 
   // TODO Optimize extend cicle
-  if (!$options.template)
-    $options.template = $options.type;
-    
   while ($options.template) {
     var d = $options.template;
     delete $options.template;
     $options = $.extend(true, {}, $.elycharts.templates[d], $options);
   }
-  
-  $options = _normalizeOptions($options);
-  
+  if (!$options.template && $options.type) {
+    $options.template = $options.type;
+    while ($options.template) {
+      d = $options.template;
+      delete $options.template;
+      $options = $.extend(true, {}, $.elycharts.templates[d], $options);
+    }
+  }
+
+  return _normalizeOptions($options, $options);
+}
+
+function _initEnv($container, $options) {
   if (!$options.width)
     $options.width = $container.width();
   if (!$options.height)
     $options.height = $container.height();
     
-	var $env = {
+  var $env = {
     id : $.elycharts.lastId ++,
-		paper : common._RaphaelInstance($container.get()[0], $options.width, $options.height),
+    paper : common._RaphaelInstance($container.get()[0], $options.width, $options.height),
     container : $container,
-		plots : [],
-		opt : $options
-	};
+    plots : [],
+    opt : $options
+  };
+
   // Rendering a transparent pixel up-left. Thay way SVG area is well-covered (else the position starts at first real object, and that mess-ups everything)
   $env.paper.rect(0,0,1,1).attr({opacity: 0});
   
   $.elycharts[$options.type].init($env);
-	
-	return $env;
+
+  return $env;
 }
 
 /**
  * Normalize options passed (primarly for backward compatibility)
  * -
  */
-function _normalizeOptions($options) {
+function _normalizeOptions($options, $fullopt) {
   if ($options.type == 'pie' || $options.type == 'funnel') {
     if ($options.values && $.isArray($options.values) && !$.isArray($options.values[0]))
       $options.values = { root : $options.values };
@@ -543,7 +577,8 @@ function _normalizeOptions($options) {
   }
   
   if ($options.defaultSeries) {
-    _normalizeOptionsColor($options, $options.defaultSeries);
+    var deftype = $fullopt.type != 'line' ? $fullopt.type : ($options.defaultSeries.type ? $options.defaultSeries.type : ($fullopt.defaultSeries.type ? $fullopt.defaultSeries.type : 'line'));
+    _normalizeOptionsColor($options.defaultSeries, deftype);
     if ($options.defaultSeries.stackedWith) {
       $options.defaultSeries.stacked = $options.defaultSeries.stackedWith;
       delete $options.defaultSeries.stackedWith;
@@ -552,10 +587,11 @@ function _normalizeOptions($options) {
     
   if ($options.series)
     for (var serie in $options.series) {
-      _normalizeOptionsColor($options, $options.series[serie]);
+      var type = $fullopt.type != 'line' ? $fullopt.type : ($options.series[serie].type ? $options.series[serie].type : ($fullopt.series[serie].type ? $fullopt.series[serie].type : (deftype ? deftype : 'line')));
+      _normalizeOptionsColor($options.series[serie], type);
       if ($options.series[serie].values)
         for (var value in $options.series[serie].values)
-          _normalizeOptionsColor($options, $options.series[serie].values[value]);
+          _normalizeOptionsColor($options.series[serie].values[value], type);
       
       if ($options.series[serie].stackedWith) {
         $options.series[serie].stacked = $options.series[serie].stackedWith;
@@ -602,13 +638,19 @@ function _normalizeOptions($options) {
   return $options;
 }
 
-function _normalizeOptionsColor($options, $section) {
+/**
+* Manage "color" attribute.
+* @param $section Section part of external conf passed
+* @param $type Type of plot (for line chart can be "line" or "bar", for other types is equal to chart type)
+*/
+function _normalizeOptionsColor($section, $type) {
   if ($section.color) {
     var color = $section.color;
     
     if (!$section.plotProps)
       $section.plotProps = {};
-    if ($section.type == 'line' || ($options.type == 'line' && !$section.type)) {
+    
+    if ($type == 'line') {
       if ($section.plotProps && !$section.plotProps.stroke)
         $section.plotProps.stroke = color;
     } else {
@@ -630,7 +672,7 @@ function _normalizeOptionsColor($options, $section) {
     if ($section.legend.dotProps && !$section.legend.dotProps.fill)
       $section.legend.dotProps.fill = color;
       
-    if ($options.type == 'line' && ($section.type == 'line' || !$section.type)) {
+    if ($type == 'line') {
       if (!$section.dotProps)
         $section.dotProps = {};
       if ($section.dotProps && !$section.dotProps.fill)
@@ -2630,16 +2672,19 @@ $.elycharts.mousemanager = {
             // path standard, generating an area for each point
             if (pieces[i].path.length >= 1 && (pieces[i].path[0][0] == 'LINE' || pieces[i].path[0][0] == 'LINEAREA'))
               for (j = 0; j < pieces[i].path[0][1].length; j++) {
-                env.mouseAreas.push({
-                  path : [ [ 'CIRCLE', pieces[i].path[0][1][j][0], pieces[i].path[0][1][j][1], 10 ] ],
-                  piece : pieces[i],
-                  pieces : pieces,
-                  index : j,
-                  props : common.areaProps(env, pieces[i].section, pieces[i].serie)
-                });
+                var props = common.areaProps(env, pieces[i].section, pieces[i].serie);
+                if (props.mouseareaShowOnNull || pieces[i].section != 'Series' || env.opt.values[pieces[i].serie][j] != null)
+                  env.mouseAreas.push({
+                    path : [ [ 'CIRCLE', pieces[i].path[0][1][j][0], pieces[i].path[0][1][j][1], 10 ] ],
+                    piece : pieces[i],
+                    pieces : pieces,
+                    index : j,
+                    props : props
+                  });
               }
               
             else // Code below is only for standard path - it should be useless now (now there are only LINE and LINEAREA)
+              // TODO DELETE
               for (j = 0; j < pieces[i].path.length; j++) {
                 env.mouseAreas.push({
                   path : [ [ 'CIRCLE', common.getX(pieces[i].path[j]), common.getY(pieces[i].path[j]), 10 ] ],
@@ -3271,7 +3316,7 @@ $.elycharts.line = {
     
     var values = env.opt.values;
     var labels = env.opt.labels;
-    var i, cum, props, serie, plot;
+    var i, cum, props, serie, plot, labelsCount;
     
     // Valorizzazione di tutte le opzioni utili e le impostazioni interne di ogni grafico e dell'ambiente di lavoro
     if (common.executeIfChanged(env, ['values', 'series'])) {
@@ -3292,27 +3337,50 @@ $.elycharts.line = {
           
           if (props.visible) {
             plot.visible = true;
+            if (!labelsCount || labelsCount < values[serie].length)
+              labelsCount = values[serie].length;
             
-            // Valori
+            // Values
+            // showValues: manage NULL elements (doing an avg of near points) for line serie
+            var showValues = []
+            for (i = 0; i < values[serie].length; i++) {
+              var val = values[serie][i];
+              if (val == null) {
+                if (props.type == 'bar')
+                  val = 0;
+                else {
+                  for (var j = i + 1; j < values[serie].length && values[serie][j] == null; j++) {}
+                  var next = j < values[serie].length ? values[serie][j] : null;
+                  for (var k = i -1; k >= 0 && values[serie][k] == null; k--) {}
+                  var prev = k >= 0 ? values[serie][k] : null;
+                  val = next != null ? (prev != null ? (next * (i - k) + prev * (j - i)) / (j - k) : next) : prev;
+                }
+              }
+              showValues.push(val);
+            }
+
             if (props.stacked && !(typeof props.stacked == 'string'))
               props.stacked = prevVisibleSerie;
+            
             if (typeof props.stacked == 'undefined' || props.stacked == serie || props.stacked < 0 || !plots[props.stacked] || !plots[props.stacked].visible || plots[props.stacked].type != plot.type) {
+              // NOT Stacked
               plot.ref = serie;
               if (props.type == 'bar')
                 plot.barno = env.barno ++;
               plot.from = [];
               if (!props.cumulative)
-                plot.to = values[serie];
+                plot.to = showValues;
               else {
                 plot.to = [];
                 cum = 0;
-                for (i = 0; i < values[serie].length; i++)
-                  plot.to.push(cum += values[serie][i]);
+                for (i = 0; i < showValues.length; i++)
+                  plot.to.push(cum += showValues[i]);
               }
-              for (i = 0; i < values[serie].length; i++)
+              for (i = 0; i < showValues.length; i++)
                 plot.from.push(0);
 
             } else {
+              // Stacked
               plot.ref = props.stacked;
               if (props.type == 'bar')
                 plot.barno = plots[props.stacked].barno;
@@ -3320,11 +3388,11 @@ $.elycharts.line = {
               plot.to = [];
               cum = 0;
               if (!props.cumulative)
-                for (i = 0; i < values[serie].length; i++)
-                  plot.to.push(plot.from[i] + values[serie][i]);
+                for (i = 0; i < showValues.length; i++)
+                  plot.to.push(plot.from[i] + showValues[i]);
               else
-                for (i = 0; i < values[serie].length; i++)
-                  plot.to.push(plot.from[i] + (cum += values[serie][i]));
+                for (i = 0; i < showValues.length; i++)
+                  plot.to.push(plot.from[i] + (cum += showValues[i]));
               plots[props.stacked].stack = plot.to;
             }
             
@@ -3352,8 +3420,16 @@ $.elycharts.line = {
         }
       }
     }
-  
-    // Preparazione scala assi (values, series, axis)
+
+    // Labels normalization (if not set or less  than values)
+    if (!labels)
+      labels = [];
+    while (labelsCount > labels.length)
+      labels.push(null);
+    labelsCount = labels.length;
+    env.opt.labels = labels;
+
+    // Prepare axis scale (values, series, axis)
     if (common.executeIfChanged(env, ['values', 'series', 'axis'])) {
       for (var lidx in axis) {
         props = common.areaProps(env, 'Axis', lidx);
@@ -3373,7 +3449,7 @@ $.elycharts.line = {
             v = Math.abs(axis[lidx].min);
           if (v) {
             var basev = Math.floor(Math.log(v)/Math.LN10) - (props.normalize - 1);
-            // NOTE: On firefx Math.pow(10, -X) sometimes results in number noise (0.89999...), it's better to do 1/Math.pow(10,X)
+            // NOTE: On firefox Math.pow(10, -X) sometimes results in number noise (0.89999...), it's better to do 1/Math.pow(10,X)
             basev = basev >= 0 ? Math.pow(10, basev) : 1 / Math.pow(10, -basev);
             v = Math.ceil(v / basev / (opt.features.grid.ny ? opt.features.grid.ny : 1)) * basev * (opt.features.grid.ny ? opt.features.grid.ny : 1);
             // Calculation above, with decimal number sometimes insert some noise in numbers (eg: 8.899999... instead of 0.9), so i need to round result with proper precision
@@ -3403,7 +3479,6 @@ $.elycharts.line = {
     var deltaBarX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 0 ? labels.length : 1);
 
     for (serie in values) {
-      //var data = values[serie];
       props = common.areaProps(env, 'Series', serie);
       plot = plots[serie];
 
@@ -3437,15 +3512,18 @@ $.elycharts.line = {
                 fillPath[1].push([x, y]);
                 fillPath[2].push([x, yy]);
               }
-              if (indexProps.dot)
-                dotPieces.push({path : [ [ 'CIRCLE', x, y, indexProps.dotProps.size ] ], attr : indexProps.dotProps}); // TODO Size e' in mezzo ad attrs
+              if (indexProps.dot) {
+                if (values[serie][i] == null && !indexProps.dotShowOnNull)
+                  dotPieces.push({path : false, attr : false});
+                else
+                  dotPieces.push({path : [ [ 'CIRCLE', x, y, indexProps.dotProps.size ] ], attr : indexProps.dotProps}); // TODO Size should not be in dotProps (not an svg props)
+              }
             }
 
           if (props.fill)
             pieces.push({ section : 'Series', serie : serie, subSection : 'Fill', path : [ fillPath ], attr : props.fillProps });
           else 
             pieces.push({ section : 'Series', serie : serie, subSection : 'Fill', path : false, attr : false });
-          
           pieces.push({ section : 'Series', serie : serie, subSection : 'Plot', path : [ linePath ], attr : props.plotProps , mousearea : 'pathsteps'});
           
           if (dotPieces.length)
@@ -3506,58 +3584,60 @@ $.elycharts.line = {
       var deltaX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 1 ? labels.length - 1 : 1);
       var deltaBarX = (opt.width - opt.margins[3] - opt.margins[1]) / (labels.length > 0 ? labels.length : 1);
       var i, j, x, y, lw, labx, laby, labe, val, txt;
-      // Label asse X
+      // Label X axis
       var paths = [];
       var labelsCenter = props.labelsCenter;
       if (labelsCenter == 'auto')
         labelsCenter = (env.indexCenter == 'bar');
 
       if (axis.x && axis.x.props.labels)
-        for (i = 0; i < labels.length; i++)
-          if (axis.x.props.labelsSkip && i < axis.x.props.labelsSkip)
-            labels[i] = false;
-          else if (typeof labels[i] != 'boolean' || labels[i]) {
-            val = labels[i];
-            if (axis.x.props.labelsFormatHandler)
-              val = axis.x.props.labelsFormatHandler(val);
-            txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
-            labx = (labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
-            laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
-            labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
-            if (axis.x.props.labelsRotate)
-              // Rotazione label
-              labe.attr({"text-anchor" : axis.x.props.labelsRotate > 0 ? "start" : "end"}).rotate(axis.x.props.labelsRotate, labx, laby).toBack();
-            else if (props.nx == 'auto' && labx + labe.getBBox().width / (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start" ? 1 : 2) > opt.width - opt.margins[1]) {
-              // Se la label "sborda" a destra, la elimino (solo con nx = auto)
-              labe.hide();
+        for (i = 0; i < labels.length; i++) 
+          if (labels[i]) {
+            if (axis.x.props.labelsSkip && i < axis.x.props.labelsSkip)
               labels[i] = false;
-            } else if (props.nx == 'auto' && (!axis.x.props.labelsAnchor || axis.x.props.labelsAnchor != "start") && labx - labe.getBBox().width / 2 < 0) {
-              // Se la label "sborda" a sinistra, la elimino (solo con nx = auto e labelsAnchor != start)
-              labe.hide();
-              labels[i] = false;
-            } else if (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start") {
-              // Label non ruotate ma con labelsAnchor
-              labe.attr({"text-anchor" : "start"});
-              lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (labelsCenter ? deltaBarX : deltaX);
-              if (axis.x.props.labelsHideCovered && lw > 0) {
-                j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
-                for (; i < j && i + 1 < labels.length; i++)
-                  labels[i + 1] = false;
+            else if (typeof labels[i] != 'boolean' || labels[i]) {
+              val = labels[i];
+              if (axis.x.props.labelsFormatHandler)
+                val = axis.x.props.labelsFormatHandler(val);
+              txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
+              labx = (labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
+              laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
+              labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
+              if (axis.x.props.labelsRotate)
+                // Rotazione label
+                labe.attr({"text-anchor" : axis.x.props.labelsRotate > 0 ? "start" : "end"}).rotate(axis.x.props.labelsRotate, labx, laby).toBack();
+              else if (props.nx == 'auto' && labx + labe.getBBox().width / (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start" ? 1 : 2) > opt.width) {
+                // Il label has overflow on the right => delete it (if nx = auto)
+                labe.hide();
+                labels[i] = false;
+              } else if (props.nx == 'auto' && (!axis.x.props.labelsAnchor || axis.x.props.labelsAnchor != "start") && labx - labe.getBBox().width / 2 < 0) {
+                // Il label has overflow on the left => delete it (if nx = auto and labelsAnchor != start)
+                labe.hide();
+                labels[i] = false;
+              } else if (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start") {
+                // label not rotated buth with a labelsAnchor
+                labe.attr({"text-anchor" : "start"});
+                lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (labelsCenter ? deltaBarX : deltaX);
+                if (axis.x.props.labelsHideCovered && lw > 0) {
+                  j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
+                  for (; i < j && i + 1 < labels.length; i++)
+                    labels[i + 1] = false;
+                }
+              } else if (axis.x.props.labelsHideCovered) {
+                // Manages labelsHideCovered with labelsAnchor != 'start'
+                lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (labelsCenter ? deltaBarX : deltaX);
+                if (lw > 0) {
+                  j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
+                  for (; i < j && i + 1 < labels.length; i++)
+                    labels[i + 1] = false;
+                }
               }
-            } else if (axis.x.props.labelsHideCovered) {
-              // Gestisco caso labelsHideCovered con labelsAnchor != 'start'
-              lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (labelsCenter ? deltaBarX : deltaX);
-              if (lw > 0) {
-                j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
-                for (; i < j && i + 1 < labels.length; i++)
-                  labels[i + 1] = false;
-              }
+              paths.push({ path : [ [ 'RELEMENT', labe ] ], attr : false });
             }
-            paths.push({ path : [ [ 'RELEMENT', labe ] ], attr : false });
           }
       pieces.push({ section : 'Axis', serie : 'x', subSection : 'Label', paths : paths });
           
-      // Titolo Asse X
+      // Title X Axis
       if (axis.x && axis.x.props.title) {
         x = opt.margins[3] + Math.floor((opt.width - opt.margins[1] - opt.margins[3]) / 2);
         y = opt.height - opt.margins[2] + axis.x.props.titleDistance * ($.browser.msie ? axis.x.props.titleDistanceIE : 1);
@@ -3566,10 +3646,10 @@ $.elycharts.line = {
       } else
         pieces.push({ section : 'Axis', serie : 'x', subSection : 'Title', path : false, attr : false });
 
-      // Label + Titolo Assi L/R
+      // Label + Title L/R Axis
       for (var jj in ['l', 'r']) {
         j = ['l', 'r'][jj];
-        if (axis[j] && axis[j].props.labels) {
+        if (axis[j] && axis[j].props.labels && props.ny) {
           paths = [];
           for (i = axis[j].props.labelsSkip ? axis[j].props.labelsSkip : 0; i <= props.ny; i++) {
             var deltaY = (opt.height - opt.margins[2] - opt.margins[0]) / props.ny;
@@ -3619,7 +3699,7 @@ $.elycharts.line = {
       
       // Grid
       if (props.nx || props.ny) {
-        var path = [], t,
+        var path = [], bandsH = [], bandsV = [],
           nx = props.nx == 'auto' ? (labelsCenter ? labels.length : labels.length - 1) : props.nx,
           ny = props.ny,
           rowHeight = (opt.height - opt.margins[2] - opt.margins[0]) / (ny ? ny : 1),
@@ -3628,25 +3708,58 @@ $.elycharts.line = {
           forceBorderX2 = typeof props.forceBorder == 'object' ? props.forceBorder[1] : props.forceBorder,
           forceBorderY1 = typeof props.forceBorder == 'object' ? props.forceBorder[0] : props.forceBorder,
           forceBorderY2 = typeof props.forceBorder == 'object' ? props.forceBorder[2] : props.forceBorder,
-          drawH = typeof props.draw == 'object' ? props.draw[0] : props.draw,
-          drawV = typeof props.draw == 'object' ? props.draw[1] : props.draw;
+          drawH = ny > 0 ? (typeof props.draw == 'object' ? props.draw[0] : props.draw) : false,
+          drawV = nx > 0 ? typeof props.draw == 'object' ? props.draw[1] : props.draw : false;
 
         if (ny > 0)
-          for (i = 0; i < ny + 1; i++)
-            if (i == 0 && forceBorderY1 || i == ny && forceBorderY2 || i > 0 && i < ny && drawH) {
+          for (i = 0; i < ny + 1; i++) {
+            if (
+              forceBorderY1 && i == 0 || // Show top line only if forced
+              forceBorderY2 && i == ny ||  // Show bottom line only if forced
+              drawH && i > 0 && i < ny // Show  other lines if draw = true
+            ) {
               path.push(["M", opt.margins[3] - props.extra[3], opt.margins[0] + Math.round(i * rowHeight) ]);
               path.push(["L", opt.width - opt.margins[1] + props.extra[1], opt.margins[0] + Math.round(i * rowHeight)]);
             }
+            if (i < ny) {
+              if (i % 2 == 0 && props.evenHProps || i % 2 == 1 && props.oddHProps)
+                bandsH.push({path : [ [ 'RECT',
+                      opt.margins[3] - props.extra[3], opt.margins[0] + Math.round(i * rowHeight), // x1, y1
+                      opt.width - opt.margins[1] + props.extra[1], opt.margins[0] + Math.round((i + 1) * rowHeight) // x2, y2
+                  ] ], attr : i % 2 == 0 ? props.evenHProps : props.oddHProps });
+              else
+                bandsH.push({ path : false, attr: false})
+            }
+          }
 
         for (i = 0; i < nx + 1; i++) {
-          if ((t = drawV && (props.nx != 'auto' || typeof labels[i] != 'boolean' || labels[i])) || (forceBorderX1 && i == 0) || (forceBorderX2 && i == nx)) {
+          if (
+            forceBorderX1 && i == 0 || // Always show first line if forced
+            forceBorderX2 && i == nx || // Always show last line if forced
+            drawV && ( // To show other lines draw must be true
+              (props.nx != 'auto' && i > 0 && i < ny) || // If nx = [number] show other lines (first and last are managed above with forceBorder)
+              (props.nx == 'auto' && (typeof labels[i] != 'boolean' || labels[i])) // if nx = 'auto' show all lines if a label is associated
+            )
+            // Show all lines if props.nx is a number, or if label != false, AND draw must be true
+          ) {
             path.push(["M", opt.margins[3] + Math.round(i * columnWidth), opt.margins[0] - props.extra[0] ]); //(t ? props.extra[0] : 0)]);
             path.push(["L", opt.margins[3] + Math.round(i * columnWidth), opt.height - opt.margins[2] + props.extra[2] ]); //(t ? props.extra[2] : 0)]);
+          }
+          if (i < nx) {
+            if (i % 2 == 0 && props.evenVProps || i % 2 == 1 && props.oddVProps)
+              bandsV.push({path : [ [ 'RECT',
+                    opt.margins[3] + Math.round(i * columnWidth), opt.margins[0] - props.extra[0], // x1, y1
+                    opt.margins[3] + Math.round((i + 1) * columnWidth), opt.height - opt.margins[2] + props.extra[2], // x2, y2
+                ] ], attr : i % 2 == 0 ? props.evenVProps : props.oddVProps });
+            else
+              bandsV.push({ path : false, attr: false})
           }
         }
         
         pieces.push({ section : 'Grid', path : path.length ? path : false, attr : path.length ? props.props : false });
-        
+        pieces.push({ section : 'GridBandH', paths : bandsH });
+        pieces.push({ section : 'GridBandV', paths : bandsV });
+
         var tpath = [];
         
         // Ticks asse X
