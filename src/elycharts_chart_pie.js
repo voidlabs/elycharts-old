@@ -86,25 +86,25 @@ $.elycharts.pie = {
               } else {
                 angleplus = 360 * values[props.inside] / plot.total * value / values[props.inside];
               }
-              //var popangle = angle + (angleplus / 2);
+              var rrstart = rstart, rrend = rend;
               if (props.r) {
                 if (props.r > 0) {
                   if (props.r <= 1)
-                    rend = rstart + rstep * props.r;
+                    rrend = rstart + rstep * props.r;
                   else
-                    rend = rstart + props.r;
+                    rrend = rstart + props.r;
                 } else {
                   if (props.r >= -1)
-                    rstart = rstart + rstep * (-props.r);
+                    rrstart = rstart + rstep * (-props.r);
                   else
-                    rstart = rstart - props.r;
+                    rrstart = rstart - props.r;
                 }
               }
               
               if (!env.opt.clockwise)
-                paths.push({ path : [ [ 'SLICE', cx, cy, rend, rstart, angle, angle + angleplus ] ], attr : props.plotProps });
+                paths.push({ path : [ [ 'SLICE', cx, cy, rrend, rrstart, angle, angle + angleplus ] ], attr : props.plotProps });
               else
-                paths.push({ path : [ [ 'SLICE', cx, cy, rend, rstart, - angle - angleplus, - angle ] ], attr : props.plotProps });
+                paths.push({ path : [ [ 'SLICE', cx, cy, rrend, rrstart, - angle - angleplus, - angle ] ], attr : props.plotProps });
             } else
               paths.push({ path : false, attr : false });
           }

@@ -43,23 +43,31 @@ $.elycharts.highlightmanager = {
         var pelement, ppiece, ppath;
         if (path && props.highlight) {
           if (props.highlight.scale) {
+            var scale = props.highlight.scale;
+            if (typeof scale == 'number')
+              scale = [scale, scale];
+
             if (path[0][0] == 'RECT') {
               var w = path[0][3] - path[0][1];
               var h = path[0][4] - path[0][2];
-              path = [ [ 'RECT', path[0][1], path[0][2] - h * (props.highlight.scale[1] - 1), path[0][3] + w * (props.highlight.scale[0] - 1), path[0][4] ] ];
+              path = [ [ 'RECT', path[0][1], path[0][2] - h * (scale[1] - 1), path[0][3] + w * (scale[0] - 1), path[0][4] ] ];
               common.animationStackPush(env, piece, element, common.getSVGProps(common.preparePathShow(env, path)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
+            }
+            else if (path[0][0] == 'CIRCLE') {
+              // I pass directly new radius
+              common.animationStackPush(env, piece, element, {r : path[0][3] * scale[0]}, props.highlight.scaleSpeed, props.highlight.scaleEasing);
             }
             else if (path[0][0] == 'SLICE') {
               // Per lo slice x e' il raggio, y e' l'angolo
-              var d = (path[0][6] - path[0][5]) * (props.highlight.scale[1] - 1) / 2;
+              var d = (path[0][6] - path[0][5]) * (scale[1] - 1) / 2;
               if (d > 90)
                 d = 90;
-              path = [ [ 'SLICE', path[0][1], path[0][1], path[0][3] * props.highlight.scale[0], path[0][4], path[0][5] - d, path[0][6] + d ] ];
+              path = [ [ 'SLICE', path[0][1], path[0][1], path[0][3] * scale[0], path[0][4], path[0][5] - d, path[0][6] + d ] ];
               common.animationStackPush(env, piece, element, common.getSVGProps(common.preparePathShow(env, path)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
               
             } else if (env.opt.type == 'funnel') {
-              var dx = (piece.rect[2] - piece.rect[0]) * (props.highlight.scale[0] - 1) / 2;
-              var dy = (piece.rect[3] - piece.rect[1]) * (props.highlight.scale[1] - 1) / 2;
+              var dx = (piece.rect[2] - piece.rect[0]) * (scale[0] - 1) / 2;
+              var dy = (piece.rect[3] - piece.rect[1]) * (scale[1] - 1) / 2;
               
               // Specifico di un settore del funnel
               common.animationStackStart(env);
@@ -123,7 +131,7 @@ $.elycharts.highlightmanager = {
             /* Con scale non va bene
             if (!attr.scale) 
               attr.scale = [1, 1];
-            element.attr({scale : [props.highlight.scale[0], props.highlight.scale[1]]}); */
+            element.attr({scale : [scale[0], scale[1]]}); */
           }
           if (props.highlight.newProps) {
             for (var a in props.highlight.newProps)

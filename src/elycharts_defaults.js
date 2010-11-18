@@ -53,6 +53,8 @@ $.elycharts.templates = {
     // essere impostati in genere proprio per lasciare lo spazio per questi elementi
     // Sintassi: [top, right, bottom, left]
     margins: [10, 10, 10, 10],
+
+    // style : {},
     
     // Per gestire al meglio l'interattivita' del grafico (tooltip, highlight, anchor...) viene inserito un secondo
     // layer per le parti sensibili al mouse. Se si sa che il grafico non avra' alcuna interattivita' si puo' impostare 
@@ -77,6 +79,7 @@ $.elycharts.templates = {
         width: 100, height: 50, 
         roundedCorners: 5, 
         padding: [6, 6] /* y, x */,
+        offset: [20, 0] /* y, x */,
         // Se frameProps = false non disegna la cornice del tooltip (ad es. per permettere di definire la propria cornice HTML)
         frameProps : { fill: "white", "stroke-width": 2 },
         contentStyle : { "font-family": "Arial", "font-size": "12px", "line-height": "16px", color: "black" }
@@ -147,7 +150,7 @@ $.elycharts.templates = {
       
       /*legend : {
         dotType : 'rect',
-        dotWidth : 10, dotHeight : 10, dotR : 5,
+        dotWidth : 10, dotHeight : 10, dotR : 4,
         dotProps : { },
         textProps : { font: '12px Arial', fill: "#000" }
       }*/
@@ -254,7 +257,7 @@ $.elycharts.templates = {
         dotMargins : [10, 5], // sx, dx
         borderProps : { fill : "white", stroke : "black", "stroke-width" : 1 },
         dotType : 'rect',
-        dotWidth : 10, dotHeight : 10, dotR : 5,
+        dotWidth : 10, dotHeight : 10, dotR : 4,
         dotProps : { type : "rect", width : 10, height : 10 },
         textProps : { font: '12px Arial', fill: "#000" }
       },

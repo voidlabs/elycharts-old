@@ -39,18 +39,33 @@ $.elycharts.legendmanager = {
     
     var wauto = 0;
     var items = [];
-    for (var serie in env.opt.legend) {
-      if (env.opt.type != 'pie') {
-        var data = {};
-        data[serie] = env.opt.legend[serie];
-        var legendCount = env.opt.legend.length;
-      } else {
-        var data = env.opt.legend[serie];
-        var legendCount = env.opt.legend[serie].length;
-      }
-      for (var i in data) {
-        var sprops = common.areaProps(env, 'Series', serie, env.opt.type == 'pie' ? i : false);
-        var dprops = sprops.legend && sprops.legend.dotProps ? sprops.legend.dotProps : props.dotProps;
+    // env.opt.legend normalmente è { serie : 'Legend', ... }, per i pie invece { serie : ['Legend', ...], ... }
+    var legendCount = 0;
+    var serie, data, h, w, x, y, xd;
+    for (serie in env.opt.legend) {
+      if (env.opt.type != 'pie')
+        legendCount ++;
+      else
+        legendCount += env.opt.legend[serie].length;
+    }
+    var i = 0;
+    for (serie in env.opt.legend) {
+      if (env.opt.type != 'pie')
+        data = [ env.opt.legend[serie] ];
+      else
+        data = env.opt.legend[serie];
+
+      for (var j in data) {
+        var sprops = common.areaProps(env, 'Series', serie, env.opt.type == 'pie' ? j : false);
+        var dprops = $.extend(true, {}, props.dotProps);
+        if (sprops.legend && sprops.legend.dotProps)
+          dprops = $.extend(true, dprops, sprops.legend.dotProps);
+        if (!dprops.fill && env.opt.type == 'pie') {
+          if (sprops.color)
+            dprops.fill = sprops.color;
+          if (sprops.plotProps && sprops.plotProps.fill)
+            dprops.fill = sprops.plotProps.fill;
+        }
         var dtype = sprops.legend && sprops.legend.dotType ? sprops.legend.dotType : props.dotType;
         var dwidth = sprops.legend && sprops.legend.dotWidth ? sprops.legend.dotWidth : props.dotWidth;
         var dheight = sprops.legend && sprops.legend.dotHeight ? sprops.legend.dotHeight : props.dotHeight;
@@ -59,31 +74,31 @@ $.elycharts.legendmanager = {
         
         if (!props.horizontal) {
           // Posizione dell'angolo in alto a sinistra
-          var h = (props.height - props.margins[0] - props.margins[2]) / legendCount;
-          var w = props.width - props.margins[1] - props.margins[3];
-          var x = Math.floor(props.x + props.margins[3]);
-          var y = Math.floor(props.y + props.margins[0] + h * i);
+          h = (props.height - props.margins[0] - props.margins[2]) / legendCount;
+          w = props.width - props.margins[1] - props.margins[3];
+          x = Math.floor(props.x + props.margins[3]);
+          y = Math.floor(props.y + props.margins[0] + h * i);
         } else {
-          var h = props.height - props.margins[0] - props.margins[2];
+          h = props.height - props.margins[0] - props.margins[2];
           if (!props.itemWidth || props.itemWidth == 'fixed') {
-            var w = (props.width - props.margins[1] - props.margins[3]) / legendCount;
-            var x = Math.floor(props.x + props.margins[3] + w * i);
+            w = (props.width - props.margins[1] - props.margins[3]) / legendCount;
+            x = Math.floor(props.x + props.margins[3] + w * i);
           } else {
-            var w = (props.width - props.margins[1] - props.margins[3]) - wauto;
-            var x = props.x + props.margins[3] + wauto;
+            w = (props.width - props.margins[1] - props.margins[3]) - wauto;
+            x = props.x + props.margins[3] + wauto;
           }
-          var y = Math.floor(props.y + props.margins[0]);
+          y = Math.floor(props.y + props.margins[0]);
         }
         
         if (dtype == "rect") {
           items.push(common.showPath(env, [ [ 'RECT', props.dotMargins[0] + x, y + Math.floor((h - dheight) / 2), props.dotMargins[0] + x + dwidth, y + Math.floor((h - dheight) / 2) + dheight, dr ] ]).attr(dprops));
-          var xd = props.dotMargins[0] + dwidth + props.dotMargins[1];
+          xd = props.dotMargins[0] + dwidth + props.dotMargins[1];
         } else if (dtype == "circle") {
-          items.push(common.showPath(env, [ [ 'CIRCLE', props.dotMargins[0] + x + dr, y + dr, dr ] ]).attr(dprops));
-          var xd = props.dotMargins[0] + dr * 2 + props.dotMargins[1];
+          items.push(common.showPath(env, [ [ 'CIRCLE', props.dotMargins[0] + x + dr, y + (h / 2), dr ] ]).attr(dprops));
+          xd = props.dotMargins[0] + dr * 2 + props.dotMargins[1];
         }
         
-        var text = data[i];
+        var text = data[j];
         var t = common.showPath(env, [ [ 'TEXT', text, x + xd, y + Math.ceil(h / 2) + ($.browser.msie ? 2 : 0) ] ]).attr({"text-anchor" : "start"}).attr(tprops); //.hide();
         items.push(t);
         while (t.getBBox().width > (w - xd) && t.getBBox().width > 10) {
@@ -98,14 +113,16 @@ $.elycharts.legendmanager = {
           wauto = t.getBBox().width + xd > wauto ? t.getBBox().width + xd : wauto;
         else
           wauto += w;
+
+        i++;
       }
     }
       
     if (autowidth)
-      props.width = wauto + props.margins[3] + props.margins[1];
+      props.width = wauto + props.margins[3] + props.margins[1] - 1;
     if (autox) {
       props.x = Math.floor((env.opt.width - props.width) / 2);
-      for (var i in items) {
+      for (i in items) {
         if (items[i].attrs.x)
           items[i].attr('x', items[i].attrs.x + props.x);
         else

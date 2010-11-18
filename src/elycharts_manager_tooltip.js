@@ -81,13 +81,13 @@ $.elycharts.tooltipmanager = {
     if (mouseAreaData.path[0][0] == 'RECT') {
       // L'area e' su un rettangolo (un bar o un indice completo), il tooltip lo faccio subito sopra
       // Nota: per capire se e' sull'indice completo basta guardare mouseAreaData.piece == null
-      x = common.getX(mouseAreaData.path[0]);
-      y = common.getY(mouseAreaData.path[0]) - props.height - 20;
+      x = common.getX(mouseAreaData.path[0]) - props.offset[1];
+      y = common.getY(mouseAreaData.path[0]) - props.height - props.offset[0];
     }
     else if (mouseAreaData.path[0][0] == 'CIRCLE') {
       // L'area e' su un cerchio (punto di un line)
-      x = common.getX(mouseAreaData.path[0]);
-      y = common.getY(mouseAreaData.path[0]) - props.height - 20;
+      x = common.getX(mouseAreaData.path[0]) - props.offset[1];
+      y = common.getY(mouseAreaData.path[0]) - props.height - props.offset[0];
     }
     else if (mouseAreaData.path[0][0] == 'SLICE') {
       // L'area è su una fetta di torta (pie)
@@ -104,14 +104,14 @@ $.elycharts.tooltipmanager = {
       
       var tipangle = path[5] + (path[6] - path[5]) / 2 + 180;
       var rad = Math.PI / 180;
-			x = path[1] + cr * Math.cos(- tipangle * rad) - w / 2;
-			y = path[2] + cr * Math.sin(- tipangle * rad) - h / 2;
+      x = path[1] + cr * Math.cos(- tipangle * rad) - w / 2;
+      y = path[2] + cr * Math.sin(- tipangle * rad) - h / 2;
     }
     else if (mouseAreaData.piece && mouseAreaData.piece.paths && mouseAreaData.index >= 0 && mouseAreaData.piece.paths[mouseAreaData.index] && mouseAreaData.piece.paths[mouseAreaData.index].rect) {
       // L'area ha una forma complessa, ma abbiamo il rettangolo di contenimento (funnel)
       var rect = mouseAreaData.piece.paths[mouseAreaData.index].rect;
-      x = rect[0];
-      y = rect[1] - props.height - 20;
+      x = rect[0] - props.offset[1];
+      y = rect[1] - props.height - props.offset[0];
     }
     
     if (env.opt.features.tooltip.positionHandler)
