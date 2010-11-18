@@ -53,6 +53,8 @@ $.elycharts.templates = {
     // essere impostati in genere proprio per lasciare lo spazio per questi elementi
     // Sintassi: [top, right, bottom, left]
     margins: [10, 10, 10, 10],
+
+    // style : {},
     
     // Per gestire al meglio l'interattivita' del grafico (tooltip, highlight, anchor...) viene inserito un secondo
     // layer per le parti sensibili al mouse. Se si sa che il grafico non avra' alcuna interattivita' si puo' impostare 
@@ -77,6 +79,7 @@ $.elycharts.templates = {
         width: 100, height: 50, 
         roundedCorners: 5, 
         padding: [6, 6] /* y, x */,
+        offset: [20, 0] /* y, x */,
         // Se frameProps = false non disegna la cornice del tooltip (ad es. per permettere di definire la propria cornice HTML)
         frameProps : { fill: "white", "stroke-width": 2 },
         contentStyle : { "font-family": "Arial", "font-size": "12px", "line-height": "16px", color: "black" }
@@ -147,7 +150,7 @@ $.elycharts.templates = {
       
       /*legend : {
         dotType : 'rect',
-        dotWidth : 10, dotHeight : 10, dotR : 5,
+        dotWidth : 10, dotHeight : 10, dotR : 4,
         dotProps : { },
         textProps : { font: '12px Arial', fill: "#000" }
       }*/
@@ -254,7 +257,7 @@ $.elycharts.templates = {
         dotMargins : [10, 5], // sx, dx
         borderProps : { fill : "white", stroke : "black", "stroke-width" : 1 },
         dotType : 'rect',
-        dotWidth : 10, dotHeight : 10, dotR : 5,
+        dotWidth : 10, dotHeight : 10, dotR : 4,
         dotProps : { type : "rect", width : 10, height : 10 },
         textProps : { font: '12px Arial', fill: "#000" }
       },
@@ -488,6 +491,7 @@ $.fn.chart = function($options) {
     }
     $env = _initEnv(this, $options);
     
+    _processGenericConfig($env, $options);
     $env.pieces = $.elycharts[$env.opt.type].draw($env);
     
     this.data('elycharts_env', $env);
@@ -500,12 +504,46 @@ $.fn.chart = function($options) {
     $env.opt = $.extend(true, $env.opt, $options);
     $env.newopt = $options;
     
+    _processGenericConfig($env, $options);
     $env.pieces = $.elycharts[$env.opt.type].draw($env);
   }
   
   return this;
 }
 
+/**
+ * Must be called only in first call to .chart, to initialize elycharts environment.
+ */
+function _initEnv($container, $options) {
+  if (!$options.width)
+    $options.width = $container.width();
+  if (!$options.height)
+    $options.height = $container.height();
+
+  var $env = {
+    id : $.elycharts.lastId ++,
+    paper : common._RaphaelInstance($container.get()[0], $options.width, $options.height),
+    container : $container,
+    plots : [],
+    opt : $options
+  };
+
+  // Rendering a transparent pixel up-left. Thay way SVG area is well-covered (else the position starts at first real object, and that mess-ups everything)
+  $env.paper.rect(0,0,1,1).attr({opacity: 0});
+
+  $.elycharts[$options.type].init($env);
+
+  return $env;
+}
+
+function _processGenericConfig($env, $options) {
+  if ($options.style)
+    $env.container.css($options.style);
+}
+
+/**
+ * Must be called in first call to .chart, to build the full config structure and normalize it.
+ */
 function _extendAndNormalizeOptions($options) {
   var k;
   // Compatibility with old $.elysia_charts.default_options and $.elysia_charts.templates
@@ -536,31 +574,8 @@ function _extendAndNormalizeOptions($options) {
   return _normalizeOptions($options, $options);
 }
 
-function _initEnv($container, $options) {
-  if (!$options.width)
-    $options.width = $container.width();
-  if (!$options.height)
-    $options.height = $container.height();
-    
-  var $env = {
-    id : $.elycharts.lastId ++,
-    paper : common._RaphaelInstance($container.get()[0], $options.width, $options.height),
-    container : $container,
-    plots : [],
-    opt : $options
-  };
-
-  // Rendering a transparent pixel up-left. Thay way SVG area is well-covered (else the position starts at first real object, and that mess-ups everything)
-  $env.paper.rect(0,0,1,1).attr({opacity: 0});
-  
-  $.elycharts[$options.type].init($env);
-
-  return $env;
-}
-
 /**
  * Normalize options passed (primarly for backward compatibility)
- * -
  */
 function _normalizeOptions($options, $fullopt) {
   if ($options.type == 'pie' || $options.type == 'funnel') {
@@ -578,7 +593,7 @@ function _normalizeOptions($options, $fullopt) {
   
   if ($options.defaultSeries) {
     var deftype = $fullopt.type != 'line' ? $fullopt.type : ($options.defaultSeries.type ? $options.defaultSeries.type : ($fullopt.defaultSeries.type ? $fullopt.defaultSeries.type : 'line'));
-    _normalizeOptionsColor($options.defaultSeries, deftype);
+    _normalizeOptionsColor($options.defaultSeries, deftype, $fullopt);
     if ($options.defaultSeries.stackedWith) {
       $options.defaultSeries.stacked = $options.defaultSeries.stackedWith;
       delete $options.defaultSeries.stackedWith;
@@ -588,10 +603,10 @@ function _normalizeOptions($options, $fullopt) {
   if ($options.series)
     for (var serie in $options.series) {
       var type = $fullopt.type != 'line' ? $fullopt.type : ($options.series[serie].type ? $options.series[serie].type : ($fullopt.series[serie].type ? $fullopt.series[serie].type : (deftype ? deftype : 'line')));
-      _normalizeOptionsColor($options.series[serie], type);
+      _normalizeOptionsColor($options.series[serie], type, $fullopt);
       if ($options.series[serie].values)
         for (var value in $options.series[serie].values)
-          _normalizeOptionsColor($options.series[serie].values[value], type);
+          _normalizeOptionsColor($options.series[serie].values[value], type, $fullopt);
       
       if ($options.series[serie].stackedWith) {
         $options.series[serie].stacked = $options.series[serie].stackedWith;
@@ -643,7 +658,7 @@ function _normalizeOptions($options, $fullopt) {
 * @param $section Section part of external conf passed
 * @param $type Type of plot (for line chart can be "line" or "bar", for other types is equal to chart type)
 */
-function _normalizeOptionsColor($section, $type) {
+function _normalizeOptionsColor($section, $type, $fullopt) {
   if ($section.color) {
     var color = $section.color;
     
@@ -660,7 +675,8 @@ function _normalizeOptionsColor($section, $type) {
       
     if (!$section.tooltip)
       $section.tooltip = {};
-    if (!$section.tooltip.frameProps)
+    // Is disabled in defaultSetting i should not set color
+     if (!$section.tooltip.frameProps && $fullopt.defaultSeries.tooltip.frameProps)
       $section.tooltip.frameProps = {};
     if ($section.tooltip && $section.tooltip.frameProps && !$section.tooltip.frameProps.stroke)
       $section.tooltip.frameProps.stroke = color;
@@ -949,11 +965,11 @@ $.elycharts.common = {
       if (anc)
         path.push([ "C", anc[0], anc[1], points[jj][0], points[jj][1], points[jj][0], points[jj][1] ]);
       
-    } else {
-      for (var i = 0; i < points.length; i++)
+    } else
+      for (var i = 0; i < points.length; i++) {
         var x = points[i][0], y = points[i][1];
-          path.push([i == 0 ? "M" : "L", x, y]);
-    }
+        path.push([i == 0 ? "M" : "L", x, y]);
+      }
     
     return path;
   },
@@ -2200,23 +2216,31 @@ $.elycharts.highlightmanager = {
         var pelement, ppiece, ppath;
         if (path && props.highlight) {
           if (props.highlight.scale) {
+            var scale = props.highlight.scale;
+            if (typeof scale == 'number')
+              scale = [scale, scale];
+
             if (path[0][0] == 'RECT') {
               var w = path[0][3] - path[0][1];
               var h = path[0][4] - path[0][2];
-              path = [ [ 'RECT', path[0][1], path[0][2] - h * (props.highlight.scale[1] - 1), path[0][3] + w * (props.highlight.scale[0] - 1), path[0][4] ] ];
+              path = [ [ 'RECT', path[0][1], path[0][2] - h * (scale[1] - 1), path[0][3] + w * (scale[0] - 1), path[0][4] ] ];
               common.animationStackPush(env, piece, element, common.getSVGProps(common.preparePathShow(env, path)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
+            }
+            else if (path[0][0] == 'CIRCLE') {
+              // I pass directly new radius
+              common.animationStackPush(env, piece, element, {r : path[0][3] * scale[0]}, props.highlight.scaleSpeed, props.highlight.scaleEasing);
             }
             else if (path[0][0] == 'SLICE') {
               // Per lo slice x e' il raggio, y e' l'angolo
-              var d = (path[0][6] - path[0][5]) * (props.highlight.scale[1] - 1) / 2;
+              var d = (path[0][6] - path[0][5]) * (scale[1] - 1) / 2;
               if (d > 90)
                 d = 90;
-              path = [ [ 'SLICE', path[0][1], path[0][1], path[0][3] * props.highlight.scale[0], path[0][4], path[0][5] - d, path[0][6] + d ] ];
+              path = [ [ 'SLICE', path[0][1], path[0][1], path[0][3] * scale[0], path[0][4], path[0][5] - d, path[0][6] + d ] ];
               common.animationStackPush(env, piece, element, common.getSVGProps(common.preparePathShow(env, path)), props.highlight.scaleSpeed, props.highlight.scaleEasing);
               
             } else if (env.opt.type == 'funnel') {
-              var dx = (piece.rect[2] - piece.rect[0]) * (props.highlight.scale[0] - 1) / 2;
-              var dy = (piece.rect[3] - piece.rect[1]) * (props.highlight.scale[1] - 1) / 2;
+              var dx = (piece.rect[2] - piece.rect[0]) * (scale[0] - 1) / 2;
+              var dy = (piece.rect[3] - piece.rect[1]) * (scale[1] - 1) / 2;
               
               // Specifico di un settore del funnel
               common.animationStackStart(env);
@@ -2280,7 +2304,7 @@ $.elycharts.highlightmanager = {
             /* Con scale non va bene
             if (!attr.scale) 
               attr.scale = [1, 1];
-            element.attr({scale : [props.highlight.scale[0], props.highlight.scale[1]]}); */
+            element.attr({scale : [scale[0], scale[1]]}); */
           }
           if (props.highlight.newProps) {
             for (var a in props.highlight.newProps)
@@ -2530,18 +2554,33 @@ $.elycharts.legendmanager = {
     
     var wauto = 0;
     var items = [];
-    for (var serie in env.opt.legend) {
-      if (env.opt.type != 'pie') {
-        var data = {};
-        data[serie] = env.opt.legend[serie];
-        var legendCount = env.opt.legend.length;
-      } else {
-        var data = env.opt.legend[serie];
-        var legendCount = env.opt.legend[serie].length;
-      }
-      for (var i in data) {
-        var sprops = common.areaProps(env, 'Series', serie, env.opt.type == 'pie' ? i : false);
-        var dprops = sprops.legend && sprops.legend.dotProps ? sprops.legend.dotProps : props.dotProps;
+    // env.opt.legend normalmente è { serie : 'Legend', ... }, per i pie invece { serie : ['Legend', ...], ... }
+    var legendCount = 0;
+    var serie, data, h, w, x, y, xd;
+    for (serie in env.opt.legend) {
+      if (env.opt.type != 'pie')
+        legendCount ++;
+      else
+        legendCount += env.opt.legend[serie].length;
+    }
+    var i = 0;
+    for (serie in env.opt.legend) {
+      if (env.opt.type != 'pie')
+        data = [ env.opt.legend[serie] ];
+      else
+        data = env.opt.legend[serie];
+
+      for (var j in data) {
+        var sprops = common.areaProps(env, 'Series', serie, env.opt.type == 'pie' ? j : false);
+        var dprops = $.extend(true, {}, props.dotProps);
+        if (sprops.legend && sprops.legend.dotProps)
+          dprops = $.extend(true, dprops, sprops.legend.dotProps);
+        if (!dprops.fill && env.opt.type == 'pie') {
+          if (sprops.color)
+            dprops.fill = sprops.color;
+          if (sprops.plotProps && sprops.plotProps.fill)
+            dprops.fill = sprops.plotProps.fill;
+        }
         var dtype = sprops.legend && sprops.legend.dotType ? sprops.legend.dotType : props.dotType;
         var dwidth = sprops.legend && sprops.legend.dotWidth ? sprops.legend.dotWidth : props.dotWidth;
         var dheight = sprops.legend && sprops.legend.dotHeight ? sprops.legend.dotHeight : props.dotHeight;
@@ -2550,31 +2589,31 @@ $.elycharts.legendmanager = {
         
         if (!props.horizontal) {
           // Posizione dell'angolo in alto a sinistra
-          var h = (props.height - props.margins[0] - props.margins[2]) / legendCount;
-          var w = props.width - props.margins[1] - props.margins[3];
-          var x = Math.floor(props.x + props.margins[3]);
-          var y = Math.floor(props.y + props.margins[0] + h * i);
+          h = (props.height - props.margins[0] - props.margins[2]) / legendCount;
+          w = props.width - props.margins[1] - props.margins[3];
+          x = Math.floor(props.x + props.margins[3]);
+          y = Math.floor(props.y + props.margins[0] + h * i);
         } else {
-          var h = props.height - props.margins[0] - props.margins[2];
+          h = props.height - props.margins[0] - props.margins[2];
           if (!props.itemWidth || props.itemWidth == 'fixed') {
-            var w = (props.width - props.margins[1] - props.margins[3]) / legendCount;
-            var x = Math.floor(props.x + props.margins[3] + w * i);
+            w = (props.width - props.margins[1] - props.margins[3]) / legendCount;
+            x = Math.floor(props.x + props.margins[3] + w * i);
           } else {
-            var w = (props.width - props.margins[1] - props.margins[3]) - wauto;
-            var x = props.x + props.margins[3] + wauto;
+            w = (props.width - props.margins[1] - props.margins[3]) - wauto;
+            x = props.x + props.margins[3] + wauto;
           }
-          var y = Math.floor(props.y + props.margins[0]);
+          y = Math.floor(props.y + props.margins[0]);
         }
         
         if (dtype == "rect") {
           items.push(common.showPath(env, [ [ 'RECT', props.dotMargins[0] + x, y + Math.floor((h - dheight) / 2), props.dotMargins[0] + x + dwidth, y + Math.floor((h - dheight) / 2) + dheight, dr ] ]).attr(dprops));
-          var xd = props.dotMargins[0] + dwidth + props.dotMargins[1];
+          xd = props.dotMargins[0] + dwidth + props.dotMargins[1];
         } else if (dtype == "circle") {
-          items.push(common.showPath(env, [ [ 'CIRCLE', props.dotMargins[0] + x + dr, y + dr, dr ] ]).attr(dprops));
-          var xd = props.dotMargins[0] + dr * 2 + props.dotMargins[1];
+          items.push(common.showPath(env, [ [ 'CIRCLE', props.dotMargins[0] + x + dr, y + (h / 2), dr ] ]).attr(dprops));
+          xd = props.dotMargins[0] + dr * 2 + props.dotMargins[1];
         }
         
-        var text = data[i];
+        var text = data[j];
         var t = common.showPath(env, [ [ 'TEXT', text, x + xd, y + Math.ceil(h / 2) + ($.browser.msie ? 2 : 0) ] ]).attr({"text-anchor" : "start"}).attr(tprops); //.hide();
         items.push(t);
         while (t.getBBox().width > (w - xd) && t.getBBox().width > 10) {
@@ -2589,14 +2628,16 @@ $.elycharts.legendmanager = {
           wauto = t.getBBox().width + xd > wauto ? t.getBBox().width + xd : wauto;
         else
           wauto += w;
+
+        i++;
       }
     }
       
     if (autowidth)
-      props.width = wauto + props.margins[3] + props.margins[1];
+      props.width = wauto + props.margins[3] + props.margins[1] - 1;
     if (autox) {
       props.x = Math.floor((env.opt.width - props.width) / 2);
-      for (var i in items) {
+      for (i in items) {
         if (items[i].attrs.x)
           items[i].attr('x', items[i].attrs.x + props.x);
         else
@@ -2966,13 +3007,13 @@ $.elycharts.tooltipmanager = {
     if (mouseAreaData.path[0][0] == 'RECT') {
       // L'area e' su un rettangolo (un bar o un indice completo), il tooltip lo faccio subito sopra
       // Nota: per capire se e' sull'indice completo basta guardare mouseAreaData.piece == null
-      x = common.getX(mouseAreaData.path[0]);
-      y = common.getY(mouseAreaData.path[0]) - props.height - 20;
+      x = common.getX(mouseAreaData.path[0]) - props.offset[1];
+      y = common.getY(mouseAreaData.path[0]) - props.height - props.offset[0];
     }
     else if (mouseAreaData.path[0][0] == 'CIRCLE') {
       // L'area e' su un cerchio (punto di un line)
-      x = common.getX(mouseAreaData.path[0]);
-      y = common.getY(mouseAreaData.path[0]) - props.height - 20;
+      x = common.getX(mouseAreaData.path[0]) - props.offset[1];
+      y = common.getY(mouseAreaData.path[0]) - props.height - props.offset[0];
     }
     else if (mouseAreaData.path[0][0] == 'SLICE') {
       // L'area è su una fetta di torta (pie)
@@ -2989,14 +3030,14 @@ $.elycharts.tooltipmanager = {
       
       var tipangle = path[5] + (path[6] - path[5]) / 2 + 180;
       var rad = Math.PI / 180;
-			x = path[1] + cr * Math.cos(- tipangle * rad) - w / 2;
-			y = path[2] + cr * Math.sin(- tipangle * rad) - h / 2;
+      x = path[1] + cr * Math.cos(- tipangle * rad) - w / 2;
+      y = path[2] + cr * Math.sin(- tipangle * rad) - h / 2;
     }
     else if (mouseAreaData.piece && mouseAreaData.piece.paths && mouseAreaData.index >= 0 && mouseAreaData.piece.paths[mouseAreaData.index] && mouseAreaData.piece.paths[mouseAreaData.index].rect) {
       // L'area ha una forma complessa, ma abbiamo il rettangolo di contenimento (funnel)
       var rect = mouseAreaData.piece.paths[mouseAreaData.index].rect;
-      x = rect[0];
-      y = rect[1] - props.height - 20;
+      x = rect[0] - props.offset[1];
+      y = rect[1] - props.height - props.offset[0];
     }
     
     if (env.opt.features.tooltip.positionHandler)
@@ -3879,25 +3920,25 @@ $.elycharts.pie = {
               } else {
                 angleplus = 360 * values[props.inside] / plot.total * value / values[props.inside];
               }
-              //var popangle = angle + (angleplus / 2);
+              var rrstart = rstart, rrend = rend;
               if (props.r) {
                 if (props.r > 0) {
                   if (props.r <= 1)
-                    rend = rstart + rstep * props.r;
+                    rrend = rstart + rstep * props.r;
                   else
-                    rend = rstart + props.r;
+                    rrend = rstart + props.r;
                 } else {
                   if (props.r >= -1)
-                    rstart = rstart + rstep * (-props.r);
+                    rrstart = rstart + rstep * (-props.r);
                   else
-                    rstart = rstart - props.r;
+                    rrstart = rstart - props.r;
                 }
               }
               
               if (!env.opt.clockwise)
-                paths.push({ path : [ [ 'SLICE', cx, cy, rend, rstart, angle, angle + angleplus ] ], attr : props.plotProps });
+                paths.push({ path : [ [ 'SLICE', cx, cy, rrend, rrstart, angle, angle + angleplus ] ], attr : props.plotProps });
               else
-                paths.push({ path : [ [ 'SLICE', cx, cy, rend, rstart, - angle - angleplus, - angle ] ], attr : props.plotProps });
+                paths.push({ path : [ [ 'SLICE', cx, cy, rrend, rrstart, - angle - angleplus, - angle ] ], attr : props.plotProps });
             } else
               paths.push({ path : false, attr : false });
           }
