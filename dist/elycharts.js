@@ -3630,10 +3630,12 @@ $.elycharts.line = {
       var labelsCenter = props.labelsCenter;
       if (labelsCenter == 'auto')
         labelsCenter = (env.indexCenter == 'bar');
+      var hideLabelsUntilX = 0; // Used for labelsHideCovered
 
       if (axis.x && axis.x.props.labels)
         for (i = 0; i < labels.length; i++) 
           if (labels[i]) {
+
             if (axis.x.props.labelsSkip && i < axis.x.props.labelsSkip)
               labels[i] = false;
             else if (typeof labels[i] != 'boolean' || labels[i]) {
@@ -3641,38 +3643,51 @@ $.elycharts.line = {
               if (axis.x.props.labelsFormatHandler)
                 val = axis.x.props.labelsFormatHandler(val);
               txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
-              labx = (labelsCenter && axis.x.props.labelsAnchor != "start" ? Math.round(deltaBarX / 2) : 0) + opt.margins[3] + i * (labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
+              labx = opt.margins[3] + i * (labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
               laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
               labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
-              if (axis.x.props.labelsRotate)
-                // Rotazione label
-                labe.attr({"text-anchor" : axis.x.props.labelsRotate > 0 ? "start" : "end"}).rotate(axis.x.props.labelsRotate, labx, laby).toBack();
-              else if (props.nx == 'auto' && labx + labe.getBBox().width / (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start" ? 1 : 2) > opt.width) {
-                // Il label has overflow on the right => delete it (if nx = auto)
-                labe.hide();
-                labels[i] = false;
-              } else if (props.nx == 'auto' && (!axis.x.props.labelsAnchor || axis.x.props.labelsAnchor != "start") && labx - labe.getBBox().width / 2 < 0) {
-                // Il label has overflow on the left => delete it (if nx = auto and labelsAnchor != start)
-                labe.hide();
-                labels[i] = false;
-              } else if (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start") {
+              var startlabe, endlabe; // Used for labelsHideCovered
+              if (axis.x.props.labelsAnchor && axis.x.props.labelsAnchor == "start") {
                 // label not rotated buth with a labelsAnchor
                 labe.attr({"text-anchor" : "start"});
-                lw = labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0) - (labelsCenter ? deltaBarX : deltaX);
-                if (axis.x.props.labelsHideCovered && lw > 0) {
-                  j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
-                  for (; i < j && i + 1 < labels.length; i++)
-                    labels[i + 1] = false;
-                }
-              } else if (axis.x.props.labelsHideCovered) {
-                // Manages labelsHideCovered with labelsAnchor != 'start'
-                lw = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 1 - (labelsCenter ? deltaBarX : deltaX);
-                if (lw > 0) {
-                  j = i + Math.ceil(lw / (labelsCenter ? deltaBarX : deltaX));
-                  for (; i < j && i + 1 < labels.length; i++)
-                    labels[i + 1] = false;
-                }
+                startlabe = labx;
+                endlabe = labx + labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0);
+              } else {
+                // Manages labelsHideCovered with labelsAnchor  = 'middle' (default)
+                var deltalabe = (labe.getBBox().width + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0) + (axis.x.props.labelsMarginRight ? axis.x.props.labelsMarginRight : 0)) / 2;
+                startlabe = labx - deltalabe;
+                endlabe = labx + deltalabe;
               }
+
+              //console.warn(txt, labx, startlabe, endlabe, labe.getBBox().width, hideLabelsUntilX);
+
+              if (axis.x.props.labelsRotate) {
+                // Rotazione label (disable labelsHideCovered)
+                labe.attr({"text-anchor" : axis.x.props.labelsRotate > 0 ? "start" : "end"}).rotate(axis.x.props.labelsRotate, labx, laby).toBack();
+                startlabe = -9999;
+                endlabe = -9999;
+              }
+
+              // Manage label overflow
+              if (startlabe > -9999 && props.nx == 'auto') {
+                if (endlabe > opt.width)
+                  // Il label has overflow on the right => delete it (if nx = auto)
+                  labels[i] = false;
+                else if (startlabe < 0)
+                  // Il label has overflow on the left => delete it (if nx = auto and labelsAnchor != start)
+                  labels[i] = false;
+              }
+
+              // Manage labelsHideCovered
+              if (labels[i] != false && axis.x.props.labelsHideCovered  && endlabe > 0) {
+                if (hideLabelsUntilX == 0 || startlabe > hideLabelsUntilX)
+                  hideLabelsUntilX = endlabe;
+                else
+                  labels[i] = false;
+              }
+              if (labels[i] == false)
+                labe.hide();
+
               paths.push({ path : [ [ 'RELEMENT', labe ] ], attr : false });
             }
           }
