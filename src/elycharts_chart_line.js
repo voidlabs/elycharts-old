@@ -181,7 +181,7 @@ $.elycharts.line = {
           }
         }
         if (axis[lidx].plots)
-          for (var ii in axis[lidx].plots) {
+          for (var ii = 0; ii < axis[lidx].plots.length; ii++) {
             plots[axis[lidx].plots[ii]].max = axis[lidx].max;
             plots[axis[lidx].plots[ii]].min = axis[lidx].min;
           }

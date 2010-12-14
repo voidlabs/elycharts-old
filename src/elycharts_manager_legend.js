@@ -55,7 +55,7 @@ $.elycharts.legendmanager = {
       else
         data = env.opt.legend[serie];
 
-      for (var j in data) {
+      for (var j = 0; j < data.length; j++) {
         var sprops = common.areaProps(env, 'Series', serie, env.opt.type == 'pie' ? j : false);
         var dprops = $.extend(true, {}, props.dotProps);
         if (sprops.legend && sprops.legend.dotProps)
