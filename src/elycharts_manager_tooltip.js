@@ -119,6 +119,21 @@ $.elycharts.tooltipmanager = {
     else
       return [x, y];
   },
+
+  getTip : function(env, serie, index) {
+    var tip = false;
+    if (env.opt.tooltips) {
+      if (typeof env.opt.tooltips == 'function')
+        tip = env.opt.tooltips(serie, index, env.opt.values, serie && env.opt.values[serie] && env.opt.values[serie][index] ? env.opt.values[serie][index] : false);
+      else {
+        if (serie && env.opt.tooltips[serie] && env.opt.tooltips[serie][index])
+          tip = env.opt.tooltips[serie][index];
+        else if (!serie && env.opt.tooltips[index])
+          tip = env.opt.tooltips[index];
+      }
+    }
+    return tip;
+  },
   
   onMouseEnter : function(env, serie, index, mouseAreaData) {
     var props = mouseAreaData.props.tooltip;
@@ -127,10 +142,13 @@ $.elycharts.tooltipmanager = {
     if (!props || !props.active)
       return false;
 
-    if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
+    var tip = this.getTip(env, serie, index);
+    if (!tip)
       return this.onMouseExit(env, serie, index, mouseAreaData);
-        
-    var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
+
+    //if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
+    //  return this.onMouseExit(env, serie, index, mouseAreaData);
+    //var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
     
     // Il dimensionamento del tooltip e la view del frame SVG, lo fa solo se width ed height sono specificati
     if (props.width && props.width != 'auto' && props.height && props.height != 'auto') {
@@ -152,10 +170,13 @@ $.elycharts.tooltipmanager = {
     if (!props || !props.active)
       return false;
 
-    if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
+    var tip = this.getTip(env, serie, index);
+    if (!tip)
       return this.onMouseExit(env, serie, index, mouseAreaData);
-        
-    var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];
+
+    /*if (!env.opt.tooltips || (serie && (!env.opt.tooltips[serie] || !env.opt.tooltips[serie][index])) || (!serie && !env.opt.tooltips[index]))
+      return this.onMouseExit(env, serie, index, mouseAreaData);
+    var tip = serie ? env.opt.tooltips[serie][index] : env.opt.tooltips[index];*/
     
     env.tooltipContainer.clearQueue();
     // Nota: Non passo da animationStackPush, i tooltip non sono legati a piece
