@@ -180,30 +180,40 @@ $.elycharts.mousemanager = {
   // Called when mouse enter an area
   onMouseOverArea : function(env, piece, index, mouseAreaData) {
     //console.warn('over', piece.serie, index);
+    if (env.opt.features.mousearea.onMouseOver)
+      env.opt.features.mousearea.onMouseOver(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
     featuresmanager.onMouseOver(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
   },
   
   // Called when mouse exit from an area
   onMouseOutArea : function(env, piece, index, mouseAreaData) {
     //console.warn('out', piece.serie, index);
+    if (env.opt.features.mousearea.onMouseOut)
+      env.opt.features.mousearea.onMouseOut(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
     featuresmanager.onMouseOut(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
   },
   
   // Called when mouse enter an area from empty space (= it was in no area before)
   onMouseEnterArea : function(env, piece, index, mouseAreaData) {
     //console.warn('enter', piece.serie, index);
+    if (env.opt.features.mousearea.onMouseEnter)
+      env.opt.features.mousearea.onMouseEnter(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
     featuresmanager.onMouseEnter(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
   },
 
   // Called when mouse enter an area and it was on another area
   onMouseChangedArea : function(env, piece, index, mouseAreaData) {
     //console.warn('changed', piece.serie, index);
+    if (env.opt.features.mousearea.onMouseChanged)
+      env.opt.features.mousearea.onMouseChanged(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
     featuresmanager.onMouseChanged(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
   },
   
   // Called when mouse leaves an area and does not enter in another one (timeout check)
   onMouseExitArea : function(env, piece, index, mouseAreaData) {
     //console.warn('exit', piece.serie, index);
+    if (env.opt.features.mousearea.onMouseExit)
+      env.opt.features.mousearea.onMouseExit(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
     featuresmanager.onMouseExit(env, mouseAreaData.piece ? mouseAreaData.piece.serie : false, mouseAreaData.index, mouseAreaData);
   }
   

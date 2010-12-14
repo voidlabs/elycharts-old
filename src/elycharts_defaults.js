@@ -188,7 +188,13 @@ $.elycharts.templates = {
         // Quanto tempo puo' passare nel passaggio da un'area all'altra per considerarlo uno spostamento di puntatore
         areaMoveDelay : 500,
         // Se diversi chart specificano lo stesso syncTag quando si attiva l'area di uno si disattivano quelle degli altri
-        syncTag: false
+        syncTag: false,
+        // Callback for mouse actions. Parameters passed: (env, serie, index, mouseAreaData)
+        onMouseEnter : false,
+        onMouseExit : false,
+        onMouseChanged : false,
+        onMouseOver : false,
+        onMouseOut : false
       },
       highlight : {
         // Evidenzia tutto l'indice con una barra ("bar"), una linea ("line") o una linea centrata sulle barre ("barline"). Se "auto" decide in autonomia tra bar e line
