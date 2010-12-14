@@ -124,7 +124,7 @@ $.elycharts.tooltipmanager = {
     var tip = false;
     if (env.opt.tooltips) {
       if (typeof env.opt.tooltips == 'function')
-        tip = env.opt.tooltips(serie, index, env.opt.values, serie && env.opt.values[serie] && env.opt.values[serie][index] ? env.opt.values[serie][index] : false);
+        tip = env.opt.tooltips(env, serie, index, serie && env.opt.values[serie] && env.opt.values[serie][index] ? env.opt.values[serie][index] : false, env.opt.labels && env.opt.labels[index] ? env.opt.labels[index] : false);
       else {
         if (serie && env.opt.tooltips[serie] && env.opt.tooltips[serie][index])
           tip = env.opt.tooltips[serie][index];
