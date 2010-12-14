@@ -2111,6 +2111,84 @@ $.elycharts.featuresmanager.register($.elycharts.frameanimationmanager, 90);
 
 (function($) {
 
+var featuresmanager = $.elycharts.featuresmanager;
+var common = $.elycharts.common;
+
+/***********************************************************************
+ * FEATURE: BALLOON
+ **********************************************************************/
+
+$.elycharts.balloonmanager = {
+  
+  afterShow : function(env, pieces) {
+    // TODO transizioni
+    
+    if (env.opt.features.balloons.active && env.opt.balloons && env.opt.type == 'funnel') {
+      var conf = env.opt.features.balloons;
+      var lastSerie = false, lastIndex = false;
+      for (var i = 0; i < pieces.length; i++) {
+        if (pieces[i].section == 'Series' && pieces[i].subSection == 'Plot') {
+          for (var index = 0; index < pieces[i].paths.length; index ++)
+            if (env.opt.balloons[pieces[i].serie] && env.opt.balloons[pieces[i].serie][index]) {
+              lastSerie = pieces[i].serie;
+              lastIndex = index;
+              this.drawBalloon(env, lastSerie, index, pieces[i].paths[index].rect);
+            }
+        } else if (lastSerie && pieces[i].section == 'Sector' && pieces[i].serie == 'bottom' && !pieces[i].subSection && lastIndex < env.opt.balloons[lastSerie].length - 1) {
+          this.drawBalloon(env, lastSerie, env.opt.balloons[lastSerie].length - 1, pieces[i].rect);
+        }
+      }
+    }
+  },
+  
+  drawBalloon : function(env, serie, index, rect) {
+    var conf = env.opt.features.balloons;
+    var balloon = env.opt.balloons[serie][index];
+    
+    //var offset = $(env.container).offset();
+    var style = {
+      position : 'absolute', 'z-index' : 25, 
+      //top : offset.top + rect[1] , left: offset.left + conf.left,
+      margin : rect[1] + "px 0 0 " + conf.left + "px",
+      height : (conf.height ? conf.height : rect[3] - rect[1]) - conf.padding[0] * 2 ,
+      width : conf.width ? conf.width : rect[0],
+      padding : conf.padding[0] + 'px ' + conf.padding[1] + 'px'
+    };
+    
+    if (typeof balloon == 'string')
+      $("<div></div>").css(style).css(conf.style).html(balloon).prependTo(env.container);
+    else 
+      $(balloon).css(style).css(conf.style).prependTo(env.container);
+    
+    // Disegna la linea
+    if (conf.line) {
+      var path = [];
+      for (var j = 0; j < conf.line.length; j++) {
+        if (j == 0)
+          path.push([ 'M', rect[0] - conf.line[j][0], rect[1] + conf.line[j][1]]);
+        else if (j == conf.line.length - 1)
+          path.push([ 'L', conf.left + (conf.width ? conf.width : rect[0]) - conf.line[j][0], rect[1] + conf.line[j][1] ]);
+        else
+          path.push([ 'L', rect[0] - conf.line[j][0], rect[1] + conf.line[j][1]]);
+      }
+      common.showPath(env, path).attr(conf.lineProps);
+    }
+  }
+}
+
+$.elycharts.featuresmanager.register($.elycharts.balloonmanager, 30);
+
+})(jQuery);
+/**********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
+ **********************************************************************/
+
+(function($) {
+
 //var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
@@ -2821,6 +2899,60 @@ $.elycharts.featuresmanager.register($.elycharts.mousemanager, 0);
 (function($) {
 
 //var featuresmanager = $.elycharts.featuresmanager;
+//var common = $.elycharts.common;
+
+/***********************************************************************
+ * FEATURE: SHADOW
+ **********************************************************************/
+
+$.elycharts.shadowmanager = {
+  
+  beforeShow : function(env, pieces) {
+    if (!env.opt.features.shadows || !env.opt.features.shadows.active)
+      return;
+      
+    // TODO if (!common.changed(env, ['labels', 'series']))
+    // TODO FIX
+    var shadowOffset = env.opt.features.shadows.offset;
+    
+    var shadows = [];
+    for (var i = 0; i < pieces.length; i++) {
+      var path = [];
+      for (var j = 0; j < pieces[i].path.length; j++) {
+        var o = pieces[i].path[j];
+        switch (o[0]) {
+          case 'M': case 'L':
+            path.push([o[0], o[1] + shadowOffset[0], o[2] + shadowOffset[1]]);
+            break;
+          case 'A': case 'C':
+            path.push([o[0], o[1], o[2], o[3], o[4], o[5], o[6] + shadowOffset[0], o[7] + shadowOffset[1]]);
+            break;
+          case 'z': case 'Z':
+            path.push([o[0]]);
+            break;
+        }
+      }
+      shadows.push({path: path, attr: env.opt.features.shadows.props});
+    }
+    for (var i = shadows.length - 1; i >= 0; i--)
+      pieces.unshift(shadows[i]);
+  }
+}
+
+$.elycharts.featuresmanager.register($.elycharts.shadowmanager, 5);
+
+})(jQuery);
+/**********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
+ **********************************************************************/
+
+(function($) {
+
+//var featuresmanager = $.elycharts.featuresmanager;
 var common = $.elycharts.common;
 
 /***********************************************************************
@@ -3012,6 +3144,220 @@ $.elycharts.tooltipmanager = {
 }
 
 $.elycharts.featuresmanager.register($.elycharts.tooltipmanager, 20);
+
+})(jQuery);
+/**********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
+ **********************************************************************/
+
+(function($) {
+
+var featuresmanager = $.elycharts.featuresmanager;
+var common = $.elycharts.common;
+
+/***********************************************************************
+ * CHART: BARLINE
+ * 
+ * Singola barra orizzontale contenente vari valori.
+ * 
+ * L'idea è che possa essere vista come una linechart orizzontale 
+ * invece di verticale, con solo serie di tipo bar e con un solo valore.
+ * In futuro (quando sarà possibile far linechart orizzontali) potrebbe
+ * proprio essere renderizzata in questo modo.
+ **********************************************************************/
+
+$.elycharts.barline = {
+  
+  init : function($env) {
+  },
+  
+  draw : function(env) {
+    var paper = env.paper;
+    var opt = env.opt;
+    
+    env.xmin = opt.margins[3];
+    env.xmax = opt.width - opt.margins[1];
+    env.ymin = opt.margins[0];
+    env.ymax = opt.height - opt.margins[2];
+    
+    var maxvalue = 0;
+    for (var serie in opt.values) {
+      var values = opt.values[serie];
+      var value = values[0];
+      var plot = {
+        props : common.areaProps(env, 'Series', serie)
+      };
+      env.plots[serie] = plot;
+      
+      if (!plot.props.stacked || !env.plots[plot.props.stacked]) {
+        plot.from = 0;
+      } else {
+        plot.from = env.plots[plot.props.stacked].to;
+      }
+      plot.to = plot.from + value;
+      if (plot.to > maxvalue)
+        maxvalue = plot.to;
+    }
+    // TODO opt.max dovrebbe essere opt.axis[?].max ?
+    if (typeof opt.max != 'undefined')
+      maxvalue = opt.max;
+    if (!maxvalue)
+      maxvalue = 1;
+      
+    var pieces = [];
+    for (serie in opt.values) {
+      plot = env.plots[serie];
+      var d = (env.xmax - env.xmin) / maxvalue;
+      if (opt.direction != 'rtl')
+        pieces.push({
+          paths : [ { path : [ [ 'RECT', env.xmin + d * plot.from, env.ymin, env.xmin + d * plot.to, env.ymax] ], attr : plot.props.plotProps } ],
+          section: 'Series', serie: serie, subSection : 'Plot', mousearea : 'paths'
+        });
+      else
+        pieces.push({
+          paths : [ { path : [ [ 'RECT', env.xmax - d * plot.from, env.ymin, env.xmax - d * plot.to, env.ymax] ], attr : plot.props.plotProps } ],
+          section: 'Series', serie: serie, subSection : 'Plot', mousearea : 'paths'
+        });
+    }
+      
+    featuresmanager.beforeShow(env, pieces);
+    common.show(env, pieces);
+    featuresmanager.afterShow(env, pieces);
+    return pieces;
+  }
+};
+
+})(jQuery);
+/**********************************************************************
+ * ELYCHARTS
+ * A Javascript library to generate interactive charts with vectorial graphics.
+ *
+ * Copyright (c) 2010 Void Labs s.n.c. (http://void.it)
+ * Licensed under the MIT (http://creativecommons.org/licenses/MIT/) license.
+ **********************************************************************/
+
+(function($) {
+
+var featuresmanager = $.elycharts.featuresmanager;
+var common = $.elycharts.common;
+
+/***********************************************************************
+ * CHART: FUNNEL
+ **********************************************************************/
+
+$.elycharts.funnel = {
+  
+  init : function($env) {
+  },
+  
+  draw : function(env) {
+    var paper = env.paper;
+    var opt = env.opt;
+    
+    env.xmin = opt.margins[3];
+    env.xmax = opt.width - opt.margins[1];
+    env.ymin = opt.margins[0] + Math.abs(opt.rh);
+
+    for (var serie in opt.values) {
+      var values = opt.values[serie];
+      
+      var lastwidthratio = opt.method == 'width' ? values[values.length - 1] / (values[0] ? values[0] : 1) :
+        Math.sqrt(values[values.length - 1] / (values[0] ? values[0] : 1) * Math.pow(1 / 2, 2)) * 2;
+      
+      env.ymax = opt.height - opt.margins[2] - lastwidthratio * Math.abs(opt.rh);
+      
+      var pieces = this.pieces(env, serie, 0, 1, 1, values);
+    }
+      
+    featuresmanager.beforeShow(env, pieces);
+    common.show(env, pieces);
+    featuresmanager.afterShow(env, pieces);
+    return pieces;
+  },
+  
+  pieces : function(env, serie, hstart, hend, wratio, values) {
+    var path, pieces = [], opt = env.opt;
+    
+    var v0 = values[0] ? values[0] : 1;
+    var h = hstart; // Starting height
+    var hslices = (hend - hstart - opt.topSector - opt.bottomSector) / (values.length > 1 ? values.length - 1 : 1);
+    var w = wratio; // Starting width
+    if ((path = this.edge(env, h, w, true)))
+      pieces.push({path : path, section: 'Edge', attr : env.opt.edgeProps});
+    if (opt.topSector > 0 && (path = this.section(env, h, h = h + opt.topSector, w, w)))
+      pieces.push({path : path.path, center: path.center, rect: path.rect, section: 'Sector', serie: 'top', attr : env.opt.topSectorProps});
+    var paths = [];  
+    for (var i = 1; i < values.length; i++) {
+      var v = values[0] ? values[i] : 1;
+      // METODO "cutarea"
+      // area taglio attuale / area taglio iniziale = valore attuale / valore iniziare
+      // => larghezza attuale = sqrt(values[i] / values[0] * pow(larghezza iniziale / 2, 2)) * 2
+      if ((path = this.section(env, h, h = h + hslices, w,
+        opt.method == 'width' ? w = v / v0 * wratio : w = Math.sqrt(v / v0 * Math.pow(wratio / 2, 2)) * 2)))
+      var props = common.areaProps(env, 'Series', serie, i - 1);
+      paths.push({path : path.path, center: path.center, rect: path.rect, attr : props.plotProps});
+    }
+    pieces.push({section: 'Series', serie: serie, paths : paths, subSection : 'Plot', mousearea : 'paths' });
+    
+    if (opt.bottomSector > 0 && (path = this.section(env, h, h = h + opt.bottomSector, w, w)))
+      pieces.push({path : path.path, center: path.center, rect: path.rect, section: 'Sector', serie: 'bottom', attr : env.opt.bottomSectorProps});
+    if ((path = this.edge(env, h, w, false)))
+      pieces.push({path : path, section : 'Edge', attr : env.opt.edgeProps});
+
+    return pieces;
+  },
+  
+  section : function(env, hfrom, hto, wfrom, wto) {
+    x1a = env.xmin + (env.xmax - env.xmin) * (wfrom / -2 + 1/2);
+    x2a = env.xmin + (env.xmax - env.xmin) * (wfrom / 2 + 1/2);
+    x1b = env.xmin + (env.xmax - env.xmin) * (wto / -2 + 1/2);
+    x2b = env.xmin + (env.xmax - env.xmin) * (wto / 2 + 1/2);
+    y1 = env.ymin + (env.ymax - env.ymin) * hfrom;
+    y2 = env.ymin + (env.ymax - env.ymin) * hto;
+    var rwa = (x2a - x1a) / 2;
+    var rha = rwa / (env.xmax - env.xmin) * 2 * Math.abs(env.opt.rh);
+    var rwb = (x2b - x1b) / 2;
+    var rhb = rwb / (env.xmax - env.xmin) * 2 * Math.abs(env.opt.rh);
+
+    var pathLn = [];
+    
+    pathLn.push(['M', x1a, y1]);
+    if (env.opt.rh != 0)
+      pathLn.push(['A', rwa, rha, 0, 0, env.opt.rh > 0 ? 1 : 0, x2a, y1]);
+    else
+      pathLn.push(['L', x2a, y1]);
+    pathLn.push(['L', x2b, y2]);
+    if (env.opt.rh != 0)
+      pathLn.push(['A', rwb, rhb, 0, 0, env.opt.rh > 0 ? 0 : 1, x1b, y2]);
+    else
+      pathLn.push(['L', x1b, y2]);
+    pathLn.push(['z']);
+    
+    return {path: pathLn, center: [(x2a + x1a) / 2, (y2 + y1) / 2 + (env.opt.rh > 0 ? -1 : +1) * (rha + rhb) / 2], rect: [x1a, y1, x2a, y2]};
+  },
+
+  edge : function(env, h, w, isTop) {
+    if ((isTop && env.opt.rh >= 0) || (!isTop && env.opt.rh <= 0))
+      return false;
+    
+    x1 = env.xmin + (env.xmax - env.xmin) * (w / -2 + 1/2);
+    x2 = env.xmin + (env.xmax - env.xmin) * (w / 2 + 1/2);
+    y = env.ymin + (env.ymax - env.ymin) * h;
+    var rw = (x2 - x1) / 2;
+    var rh = rw / (env.xmax - env.xmin) * 2 * Math.abs(env.opt.rh);
+
+    var pathLn = [];
+    pathLn.push(['M', x1, y]);
+    pathLn.push(['A', rw, rh, 0, 0, env.opt.rh < 0 ? 1 : 0, x2, y]);
+    pathLn.push(['A', rw, rh, 0, 0, env.opt.rh < 0 ? 1 : 0, x1, y]);
+    pathLn.push(['z']);
+    return pathLn;
+  }
+};
 
 })(jQuery);
 /**********************************************************************
