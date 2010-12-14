@@ -321,6 +321,8 @@ $.elycharts.line = {
                 val = axis.x.props.labelsFormatHandler(val);
               txt = (axis.x.props.prefix ? axis.x.props.prefix : "") + labels[i] + (axis.x.props.suffix ? axis.x.props.suffix : "");
               labx = opt.margins[3] + i * (labelsCenter ? deltaBarX : deltaX) + (axis.x.props.labelsMargin ? axis.x.props.labelsMargin : 0);
+              if (axis.x.props.labelsPos && axis.x.props.labelsPos != 'start')
+                labx += axis.x.props.labelsPos == 'middle' ? (labelsCenter ? deltaBarX : deltaX) / 2 : (labelsCenter ? deltaBarX : deltaX);
               laby = opt.height - opt.margins[2] + axis.x.props.labelsDistance;
               labe = paper.text(labx, laby, txt).attr(axis.x.props.labelsProps).toBack();
               var startlabe, endlabe; // Used for labelsHideCovered

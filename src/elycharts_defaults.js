@@ -303,6 +303,8 @@ $.elycharts.templates = {
       //labelsFormatHandler : function (label) { return label },
       // Salta le prime N label
       //labelsSkip : 0, 
+      // [solo asse x] Decide la posizione della label rispetto alla linea della griglia relativa
+      //labelsPos : "start",
       // Modifica l'allineamento standard (middle per asse x, end per asse l, start per asse right)
       //labelsAnchor : "start"
       // Nascondi automaticamente le label che vengono coperte da altre
